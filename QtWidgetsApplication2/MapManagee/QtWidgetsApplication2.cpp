@@ -11,20 +11,29 @@
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
 {
-    // Arayüz bileþenlerini oluþturma
-    nLabel = new QLabel("Satir Sayisi (N):", this);
-    mLabel = new QLabel("Sutun Sayisi (M):", this);
+    // Arayuz bilesenlerini olusturma
+    nLabel = new QLabel("Satir  (N):", this);
+    mLabel = new QLabel("Sutun  (M):", this);
     nLineEdit = new QLineEdit(this);
     mLineEdit = new QLineEdit(this);
-    createButton = new QPushButton("Matris Olustur", this);
+    createButton = new QPushButton("Matris olustur", this);
     loadButton = new QPushButton("Matris Yukle", this);
     addObstacleButton = new QPushButton("Engel Ekle", this);
     addSeaButton = new QPushButton("Deniz Ekle", this);
     addMineButton = new QPushButton("Mayin Ekle", this);
     saveButton = new QPushButton("Kaydet", this);
     matrixTable = new QTableWidget(this);
+    findAlgorithmButton = new QPushButton("Algoritma olustur", this);
 
-    // Baþlangýç durumu ve buton ayarlarý
+    // Algoritma modu icin yeni bilesenler
+    setStartButton = new QPushButton("Baslangic ", this);
+    setEndButton = new QPushButton("Bitis ", this);
+    findPathButton = new QPushButton("Yolu Bul", this);
+    resetButton = new QPushButton("Geri Don", this);
+    resultsTextEdit = new QTextEdit(this);
+    infoLabel = new QLabel("Baslangic ve bitis sec.", this);
+
+    // Baslangic durumu ve buton ayarlari
     currentState = AppState::None;
     addObstacleButton->setCheckable(true);
     addSeaButton->setCheckable(true);
@@ -33,8 +42,12 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     addSeaButton->setEnabled(false);
     addMineButton->setEnabled(false);
     saveButton->setEnabled(false);
+    findAlgorithmButton->setEnabled(false);
+    setStartButton->setCheckable(true);
+    setEndButton->setCheckable(true);
+    findPathButton->setEnabled(false);
 
-    // Düðmeleri ayrý yatay layout'lara yerleþtirme
+    // Duðmeleri ayri yatay layout'lara yerlestirme
     QHBoxLayout* inputLayout = new QHBoxLayout();
     inputLayout->addWidget(nLabel);
     inputLayout->addWidget(nLineEdit);
@@ -48,18 +61,40 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     actionButtonLayout->addWidget(addSeaButton);
     actionButtonLayout->addWidget(addMineButton);
     actionButtonLayout->addWidget(saveButton);
+    actionButtonLayout->addWidget(findAlgorithmButton);
 
-    // Ana dikey layout'u oluþturma ve bileþenleri ekleme
+    // Algoritma ile ilgili bilesenlerin layout'u
+    QHBoxLayout* algorithmButtonsLayout = new QHBoxLayout();
+    algorithmButtonsLayout->addWidget(setStartButton);
+    algorithmButtonsLayout->addWidget(setEndButton);
+    algorithmButtonsLayout->addWidget(findPathButton);
+
+    QVBoxLayout* algorithmLayout = new QVBoxLayout();
+    algorithmLayout->addWidget(infoLabel);
+    algorithmLayout->addLayout(algorithmButtonsLayout);
+    algorithmLayout->addWidget(resultsTextEdit);
+    algorithmLayout->addWidget(resetButton);
+
+    // Tum layout'lari yöneten ana layout
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(inputLayout);
     mainLayout->addWidget(matrixTable);
     mainLayout->addLayout(actionButtonLayout);
+    mainLayout->addLayout(algorithmLayout,0);
+
+    // Baslangicta algoritma ile ilgili her seyi gizle
+    infoLabel->hide();
+    setStartButton->hide();
+    setEndButton->hide();
+    findPathButton->hide();
+    resultsTextEdit->hide();
+    resetButton->hide();
 
     // Ana layout'u pencereye ayarla
     setLayout(mainLayout);
-    setWindowTitle("Matris Uygulamasi");
+    setWindowTitle("Matrix Uygulamasi");
 
-    // Sinyal ve slot baðlantýlarý
+    // Sinyal ve slot baðlantilari
     connect(createButton, &QPushButton::clicked, this, &QtWidgetsApplication2::createMatrix);
     connect(loadButton, &QPushButton::clicked, this, &QtWidgetsApplication2::loadMatrix);
     connect(addObstacleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addObstacleClicked);
@@ -67,6 +102,13 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     connect(addMineButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addMineClicked);
     connect(matrixTable, &QTableWidget::cellClicked, this, &QtWidgetsApplication2::cellClicked);
     connect(saveButton, &QPushButton::clicked, this, &QtWidgetsApplication2::saveMatrix);
+    connect(findAlgorithmButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findAlgorithm);
+
+    // Algoritma modu butonlari baðlantilari
+    connect(setStartButton, &QPushButton::clicked, this, &QtWidgetsApplication2::setStartPoint);
+    connect(setEndButton, &QPushButton::clicked, this, &QtWidgetsApplication2::setEndPoint);
+    connect(findPathButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findPath);
+    connect(resetButton, &QPushButton::clicked, this, &QtWidgetsApplication2::resetUI);
 }
 
 QtWidgetsApplication2::~QtWidgetsApplication2()
@@ -95,12 +137,18 @@ void QtWidgetsApplication2::createMatrix()
         matrixTable->setColumnWidth(j, cellSize);
     }
 
+    // Hem tabloyu hem m_matrixData’yi doldur
+    m_matrixData.clear();
+    m_matrixData.resize(n, std::vector<int>(m, 0));
+
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < m; ++j) {
             QTableWidgetItem* item = new QTableWidgetItem("Kara");
             item->setBackground(QColor(139, 69, 19));
             item->setForeground(QColor(0, 0, 0));
             matrixTable->setItem(i, j, item);
+
+            m_matrixData[i][j] = 0; // Kara
         }
     }
 
@@ -117,6 +165,7 @@ void QtWidgetsApplication2::createMatrix()
     addSeaButton->setEnabled(true);
     addMineButton->setEnabled(true);
     saveButton->setEnabled(true);
+    findAlgorithmButton->setEnabled(true);
 }
 
 void QtWidgetsApplication2::addObstacleClicked()
@@ -160,27 +209,113 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     QTableWidgetItem* item = matrixTable->item(row, col);
     if (!item) return;
 
+    // 1) Deniz ekleme
     if (currentState == AppState::AddingSea) {
         item->setText("Deniz");
         item->setBackground(QColor(0, 191, 255));
         item->setForeground(QColor(0, 0, 0));
+        return;
     }
-    else if (currentState == AppState::AddingObstacle) {
+
+    // 2) Engel ekleme
+    if (currentState == AppState::AddingObstacle) {
         item->setText("Engel");
         item->setBackground(QColor(0, 0, 0));
         item->setForeground(QColor(255, 255, 255));
+        return;
     }
-    else if (currentState == AppState::AddingMine) {
-        // Mayýn sadece denize yerleþtirilebilir.
-        if (item->text() == "Deniz" || item->text() == "X") { // "X" olan hücrelere de mayýn eklenmesine izin ver.
-            item->setText("X"); // Sembolü X olarak ayarla
+
+    // 3) Mayin ekleme (sadece denize)
+    if (currentState == AppState::AddingMine) {
+        if (item->text() == "Deniz" || item->text() == "X") {
+            item->setText("X");
             item->setBackground(QColor(0, 191, 255));
-            item->setForeground(QColor(255, 0, 0)); // Kýrmýzý rengi ayarla
+            item->setForeground(QColor(255, 0, 0));
         }
         else {
             QMessageBox::warning(this, "Hata", "Mayin sadece denize yerlestirilebilir.");
         }
+        return;
     }
+
+    // 4) Baslangic secimi
+    if (currentState == AppState::SettingStart) {
+       
+        if (item->text() == "Engel" || item->text() == "X") {
+            QMessageBox::warning(this, "Uyari", "ERRRRORRRR.");
+            return;
+        }
+
+        // Eski baslangici eski rengine döndur
+        if (startPointItem) {
+            if (startPointItem->text() == "Deniz" || startPointItem->text() == "X") {
+                startPointItem->setBackground(QColor(0, 191, 255));
+                if (startPointItem->text() == "X") startPointItem->setForeground(QColor(255, 0, 0));
+            }
+            else if (startPointItem->text() == "Engel") {
+                startPointItem->setBackground(QColor(0, 0, 0));
+                startPointItem->setForeground(QColor(255, 255, 255));
+            }
+            else {
+                // Kara
+                startPointItem->setBackground(QColor(139, 69, 19));
+                startPointItem->setForeground(QColor(0, 0, 0));
+            }
+        }
+
+        // Yeni baslangic
+        item->setBackground(QColor(0, 255, 0)); // Yesil
+        item->setForeground(QColor(0, 0, 0));
+        startPointItem = item;
+        startRow = row;
+        startCol = col;
+
+        setStartButton->setChecked(false);
+        currentState = AppState::None;
+        infoLabel->setText("Baslangic secildi.");
+        if (endPointItem) findPathButton->setEnabled(true);
+        return;
+    }
+
+    // 5) Bitis secimi
+    if (currentState == AppState::SettingEnd) {
+        if (item->text() == "Engel" || item->text() == "X") {
+            QMessageBox::warning(this, "Uyari", "ERRRORRR.");
+            return;
+        }
+
+        // Eski bitisi eski rengine döndur
+        if (endPointItem) {
+            if (endPointItem->text() == "Deniz" || endPointItem->text() == "X") {
+                endPointItem->setBackground(QColor(0, 191, 255));
+                if (endPointItem->text() == "X") endPointItem->setForeground(QColor(255, 0, 0));
+            }
+            else if (endPointItem->text() == "Engel") {
+                endPointItem->setBackground(QColor(0, 0, 0));
+                endPointItem->setForeground(QColor(255, 255, 255));
+            }
+            else {
+                // Kara
+                endPointItem->setBackground(QColor(139, 69, 19));
+                endPointItem->setForeground(QColor(0, 0, 0));
+            }
+        }
+
+        // Yeni bitis
+        item->setBackground(QColor(255, 0, 0)); // Kirmizi
+        item->setForeground(QColor(255, 255, 255));
+        endPointItem = item;
+        endRow = row;
+        endCol = col;
+
+        setEndButton->setChecked(false);
+        currentState = AppState::None;
+        infoLabel->setText("Bitis secildi.");
+        if (startPointItem) findPathButton->setEnabled(true);
+        return;
+    }
+
+    
 }
 
 void QtWidgetsApplication2::saveMatrix()
@@ -217,7 +352,7 @@ void QtWidgetsApplication2::saveMatrix()
                 else if (text == "Deniz") {
                     value = 2;
                 }
-                else if (text == "X") { // "Mayin" yerine "X" olarak kontrol et
+                else if (text == "X") { 
                     value = 3;
                 }
             }
@@ -254,22 +389,22 @@ void QtWidgetsApplication2::loadMatrix()
     m_currentFilePath = fileName;
 
     QTextStream in(&file);
-    std::vector<std::vector<int>> matrixData;
+    m_matrixData.clear(); // Mevcut m_matrixData'yi temizle
     int cols = 0;
 
-    // Dosyanýn tüm satýrlarýný okuyup veriyi bir vektöre al
+    // Dosyanin tum satirlarini okuyup veriyi m_matrixData'ya al
     while (!in.atEnd()) {
         QString line = in.readLine();
-        if (line.trimmed().isEmpty()) continue; // Boþ satýrlarý atla
+        if (line.trimmed().isEmpty()) continue; // Bos satirlari atla
 
         QStringList values = line.split(" ", Qt::SkipEmptyParts);
         std::vector<int> row;
         for (const QString& val : values) {
             row.push_back(val.toInt());
         }
-        matrixData.push_back(row);
+        m_matrixData.push_back(row); 
 
-        // Sütun sayýsýný ilk satýrdan al
+        // Sutun sayisini ilk satirdan al
         if (cols == 0) {
             cols = row.size();
         }
@@ -277,22 +412,22 @@ void QtWidgetsApplication2::loadMatrix()
 
     file.close();
 
-    int rows = matrixData.size();
+    int rows = m_matrixData.size();
 
-    // Boyutlarýn geçerliliðini kontrol et
+    // Boyutlarin gecerliliðini kontrol et
     if (rows <= 0 || cols <= 0) {
         QMessageBox::warning(this, "Hata", "Dosyada gecerli matris verisi bulunamadi.");
         return;
     }
 
-    // QTableWidget'ý okunan boyutlara göre ayarla
+    // QTableWidget'i okunan boyutlara göre ayarla
     matrixTable->setRowCount(rows);
     matrixTable->setColumnCount(cols);
 
-    // Vektördeki verileri QTableWidget'a aktar
+    // m_matrixData'daki verileri QTableWidget'a aktar
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            int value = matrixData[i][j];
+            int value = m_matrixData[i][j];
             QTableWidgetItem* item = new QTableWidgetItem();
 
             if (value == 0) {
@@ -313,17 +448,125 @@ void QtWidgetsApplication2::loadMatrix()
             else if (value == 3) {
                 item->setText("X");
                 item->setBackground(QColor(0, 191, 255));
-                item->setForeground(QColor(255, 0, 0)); // Kýrmýzý rengi burada doðru ayarla
+                item->setForeground(QColor(255, 0, 0));
             }
             matrixTable->setItem(i, j, item);
         }
     }
 
-    // Butonlarý etkinleþtir
+    // Butonlari aktif et
     addObstacleButton->setEnabled(true);
     addSeaButton->setEnabled(true);
     addMineButton->setEnabled(true);
     saveButton->setEnabled(true);
+    findAlgorithmButton->setEnabled(true);
+}
+void QtWidgetsApplication2::findAlgorithm()
+{
+    // Matris olusturulmadiysa hata ver
+    if (m_matrixData.empty() || m_matrixData[0].empty()) {
+        QMessageBox::warning(this, "Hata", "Lutfen önce bir matris olusturun veya yukleyin.");
+        return;
+    }
 
-    QMessageBox::information(this, "Basarili", "Matris basariyla yuklendi.");
+    // Matris duzenleme bilesenlerini gizle
+    nLabel->hide();
+    mLabel->hide();
+    nLineEdit->hide();
+    mLineEdit->hide();
+    createButton->hide();
+    loadButton->hide();
+    addObstacleButton->hide();
+    addSeaButton->hide();
+    addMineButton->hide();
+    saveButton->hide();
+    findAlgorithmButton->hide();
+
+    // Algoritma bilesenlerini göster
+    infoLabel->show();
+    setStartButton->show();
+    setEndButton->show();
+    findPathButton->show();
+    resultsTextEdit->show();
+    resetButton->show();
+
+
+    // Secim butonlarini sifirla
+    if (startPointItem) {
+        // startPointItem rengini eski haline getir
+    }
+    if (endPointItem) {
+        // endPointItem rengini eski haline getir
+    }
+    startPointItem = nullptr;
+    endPointItem = nullptr;
+    findPathButton->setEnabled(false);
+    infoLabel->setText("Baslangic ve Bitis noktalarini secin ");
+    resultsTextEdit->clear();
+}
+void QtWidgetsApplication2::setStartPoint()
+{
+    // Önce bitis secim modunu kapatalim
+    setEndButton->setChecked(false);
+
+    if (setStartButton->isChecked()) {
+        currentState = AppState::SettingStart;
+        infoLabel->setText("baslangic sec.");
+    }
+    else {
+        currentState = AppState::None;
+        infoLabel->setText("Baslangic secim iptal.");
+    }
+}
+
+void QtWidgetsApplication2::setEndPoint()
+{
+    // Önce baslangic secim modunu kapatalim
+    setStartButton->setChecked(false);
+
+    if (setEndButton->isChecked()) {
+        currentState = AppState::SettingEnd;
+        infoLabel->setText("Bitis .");
+    }
+    else {
+        currentState = AppState::None;
+        infoLabel->setText("Bitis iptal .");
+    }
+}
+
+void QtWidgetsApplication2::findPath()
+{
+    QString startText = QString("Baslangic: (%1, %2)").arg(startRow).arg(startCol);
+    QString endText = QString("Bitis    : (%1, %2)").arg(endRow).arg(endCol);
+    printf("%d,%d", startRow, startCol);
+
+    if (resultsTextEdit) {
+        resultsTextEdit->append(startText);
+        resultsTextEdit->append(endText);
+    }
+    else {
+        QMessageBox::information(this, "Koordinatlar", startText + "\n" + endText);
+    }
+
+    
+    FindPath::Cell start_cell{ startRow, startCol };
+    FindPath::Cell end_cell{ endRow, endCol };
+
+    auto path = FindPath::AStar(m_matrixData, start_cell, end_cell);
+
+    if (path.empty()) {
+        if (resultsTextEdit) resultsTextEdit->append("Yol bulunamadi.");
+        else QMessageBox::information(this, "Sonuc", "Yol bulunamadi.");
+        return;
+    }
+
+    
+    if (resultsTextEdit) {
+        resultsTextEdit->append(QString("Yol uzunlugu: %1").arg(path.size()));
+    }
+}
+
+void QtWidgetsApplication2::resetUI()
+{
+	// 
 }

@@ -43,9 +43,18 @@
     <ClCompile Include="MapManagee\QtWidgetsApplication2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FindAlgorithmWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FindPath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FindPath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -64,6 +73,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="MapManagee\QtWidgetsApplication2.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FindAlgorithmWindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
