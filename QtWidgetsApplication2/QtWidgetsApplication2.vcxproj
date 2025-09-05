@@ -37,12 +37,12 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>6.9.2_msvc2022_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;concurrent</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>6.9.2_msvc2022_64</QtInstall>
-    <QtModules>core;gui;widgets</QtModules>
+    <QtModules>core;gui;widgets;concurrent</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -66,7 +66,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile />
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManagee;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\ThreadManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManagee;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\VehicleManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -98,19 +98,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ThreadManager\threadManager.cpp" />
+    <ClCompile Include="VehicleSelectionDialog.cpp" />
     <QtRcc Include="QtWidgetsApplication2.qrc" />
     <QtUic Include="QtWidgetsApplication2.ui" />
+    <ClCompile Include="VehicleManager\sea\sea.cpp" />
+    <ClCompile Include="VehicleManager\land\land.cpp" />
+    <ClCompile Include="VehicleManager\air\air.cpp" />
     <ClCompile Include="definitions.cpp" />
     <ClCompile Include="FindAlgorithmWindow.cpp" />
-    <ClCompile Include="FindPath.cpp" />
+    <ClCompile Include="VehicleManager\FindPath.cpp" />
     <ClCompile Include="MapManagee\QtWidgetsApplication2.cpp" />
     <ClCompile Include="main.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="ThreadManager\threadManager.h" />
+    <ClInclude Include="VehicleManager\sea\sea.h" />
+    <ClInclude Include="VehicleManager\land\land.h" />
+    <ClInclude Include="VehicleManager\air\air.h" />
     <ClInclude Include="definitions.h" />
-    <ClInclude Include="FindPath.h" />
+    <ClInclude Include="VehicleManager\FindPath.h" />
+    <QtMoc Include="VehicleSelectionDialog.h" />
     <QtMoc Include="FindAlgorithmWindow.h" />
     <QtMoc Include="MapManagee\QtWidgetsApplication2.h" />
   </ItemGroup>

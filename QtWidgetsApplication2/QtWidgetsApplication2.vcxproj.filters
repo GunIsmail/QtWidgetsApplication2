@@ -46,7 +46,22 @@
     <ClCompile Include="FindAlgorithmWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FindPath.cpp">
+    <ClCompile Include="VehicleManager\FindPath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VehicleManager\air\air.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VehicleManager\land\land.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VehicleManager\sea\sea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VehicleSelectionDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadManager\threadManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -54,7 +69,16 @@
     <ClInclude Include="definitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FindPath.h">
+    <ClInclude Include="VehicleManager\FindPath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VehicleManager\air\air.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VehicleManager\land\land.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VehicleManager\sea\sea.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -76,6 +100,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="FindAlgorithmWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="VehicleSelectionDialog.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="ThreadManager\threadManager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

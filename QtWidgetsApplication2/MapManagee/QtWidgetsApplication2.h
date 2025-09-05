@@ -8,8 +8,18 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QInputDialog>
+#include <Qlist>
+#include <QMap>
 #include "FindAlgorithmWindow.h"
 #include "FindPath.h"
+#include "ui_QtWidgetsApplication2.h" 
+#include "VehicleSelectionDialog.h"
+#include "ThreadManager/threadManager.h"
+#include "definitions.h"
+
+#include <QtWidgets/QMainWindow> 
+
 
 // Uygulama durumlarýný tanýmlayan bir enum
 enum class AppState {
@@ -42,8 +52,11 @@ private slots:
     void setEndPoint();
     void findPath();
     void resetUI();
+    void skipVehicle();
+
 
 private:
+    Ui::QtWidgetsApplication2Class ui;
 
     QLineEdit* nLineEdit;
     QLineEdit* mLineEdit;
@@ -61,6 +74,7 @@ private:
     QPushButton* setEndButton;
     QPushButton* findPathButton;
     QPushButton* resetButton;
+    QPushButton* skipButton;
     QTextEdit* resultsTextEdit;
     QLabel* infoLabel;
 	QTableWidgetItem* startPointItem = nullptr;
@@ -74,6 +88,18 @@ private:
     int startCol = -1;
     int endRow = -1;
     int endCol = -1;
+    enum class Vehicle { Land, Sea, Air };
+
+    QMap<FindPath::Vehicle, FindPath::Cell> m_startPoints;
+    QMap<FindPath::Vehicle, FindPath::Cell> m_endPoints;
+
+    // Ýþlenecek araç listesi ve mevcut aracýn indeksi
+    QList<FindPath::Vehicle> m_vehicles;
+    int m_vehicleIndex = 0;
+
+    // Yardýmcý fonksiyon
+    QString vehicleToText(FindPath::Vehicle v);
+
 
 
     AppState currentState;
