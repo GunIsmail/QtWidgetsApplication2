@@ -1,13 +1,14 @@
-#include "land.h"
-#include "../FindPath.h" // Üst klasördeki FindPath.h'yi dahil et
+ï»¿#include "land.h"
+#include "definitions.h"
 
-// Gerekli tüm kütüphaneleri dahil edin
 #include <queue>
 #include <limits>
 #include <algorithm>
-#include <cmath>
+#include <QThread>
+#include <QCoreApplication>
+#include <QDebug>
 
-// A* için yardýmcý yapýlar (Node, ByF)
+// A* iÃ§in node yapÄ±sÄ±
 struct Node {
     int r, c;
     int g;
@@ -15,27 +16,35 @@ struct Node {
 };
 
 struct ByF {
-    bool operator()(const Node& a, const Node& b) const { return a.f > b.f; }
+    bool operator()(const Node& a, const Node& b) const {
+        return a.f > b.f;
+    }
 };
 
+// HÃ¼cre kara mÄ± kontrol et
 static bool passableForLand(const FindPath::Grid& grid, int r, int c) {
-    if (!FindPath::inBounds(r, c, (int)grid.size(), (int)grid[0].size())) {
+    if (!FindPath::inBounds(r, c, (int)grid.size(), (int)grid[0].size()))
         return false;
-    }
-    return grid[r][c] == 0; 
+    return grid[r][c] == 0; // 0 = Kara
 }
 
-FindPath::PathResult Land::aStar(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal) {
+FindPath::PathResult Land::aStar(
+    const FindPath::Grid& grid,
+    FindPath::Cell start,
+    FindPath::Cell goal,
+    Visualization* viz)
+{
     FindPath::PathResult out;
-    const int R = (int)grid.size();
+    int R = (int)grid.size();
     if (R == 0) return out;
-    const int C = (int)grid[0].size();
+    int C = (int)grid[0].size();
 
-    if (!passableForLand(grid, start.r, start.c) || !passableForLand(grid, goal.r, goal.c))
+    if (!passableForLand(grid, start.r, start.c) ||
+        !passableForLand(grid, goal.r, goal.c))
         return out;
 
     const int dr[4] = { -1, 1, 0, 0 };
-    const int dc[4] = { 0, 0,-1, 1 };
+    const int dc[4] = { 0, 0, -1, 1 };
 
     std::priority_queue<Node, std::vector<Node>, ByF> open;
     std::vector<std::vector<int>> g(R, std::vector<int>(C, std::numeric_limits<int>::max()));
@@ -50,6 +59,7 @@ FindPath::PathResult Land::aStar(const FindPath::Grid& grid, FindPath::Cell star
         if (closed[cur.r][cur.c]) continue;
         closed[cur.r][cur.c] = true;
 
+
         if (cur.r == goal.r && cur.c == goal.c) {
             std::vector<FindPath::Cell> revNodes;
             FindPath::Cell p = goal;
@@ -59,13 +69,24 @@ FindPath::PathResult Land::aStar(const FindPath::Grid& grid, FindPath::Cell star
             }
             revNodes.push_back(start);
             std::reverse(revNodes.begin(), revNodes.end());
-            out.nodes = std::move(revNodes);
+            out.nodes = revNodes;
+            out.distance = out.nodes.size() - 1;
+
+            if (viz) {
+                for (auto& cell : out.nodes) {
+                    viz->visualizeStep(cell, VisualizationConfig::LAND_COLOR);
+                    QCoreApplication::processEvents();
+                    QThread::msleep(VisualizationConfig::STEP_DELAY_MS);
+                }
+            }
             return out;
         }
 
         for (int k = 0; k < 4; k++) {
-            int nr = cur.r + dr[k], nc = cur.c + dc[k];
+            int nr = cur.r + dr[k];
+            int nc = cur.c + dc[k];
             if (!passableForLand(grid, nr, nc) || closed[nr][nc]) continue;
+
             int tentative_g = g[cur.r][cur.c] + 1;
             if (tentative_g < g[nr][nc]) {
                 g[nr][nc] = tentative_g;
@@ -75,5 +96,6 @@ FindPath::PathResult Land::aStar(const FindPath::Grid& grid, FindPath::Cell star
             }
         }
     }
+
     return out;
 }

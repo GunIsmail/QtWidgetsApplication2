@@ -1,12 +1,15 @@
 #ifndef AIR_H
 #define AIR_H
 
-#include "../FindPath.h" // Ortak yapýlar ve sýnýflar için
-#include "../definitions.h" // Hýz bilgileri için
+#include "findpath.h"
+#include "visualization.h"
 
-namespace Air {
-    // Hava aracý için en basit yol bulma fonksiyonu
-    FindPath::PathResult findPath(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal);
-}
+class Air {
+public:
+    static FindPath::PathResult findPath(const FindPath::Grid& grid,
+        FindPath::Cell start,
+        FindPath::Cell goal,
+        Visualization* viz);
+};
 
 #endif // AIR_H

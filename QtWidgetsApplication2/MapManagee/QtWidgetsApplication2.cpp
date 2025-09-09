@@ -1,4 +1,4 @@
-#include "QtWidgetsApplication2.h"
+ï»¿#include "QtWidgetsApplication2.h"
 #include <QMessageBox>
 #include <QHeaderView>
 #include <QColor>
@@ -10,11 +10,11 @@
 #include <QInputDialog>
 #include <Qstring>
 #include <QTextEdit>
+#include <QComboBox>
 
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
 {
-  
     // Arayuz bilesenlerini olusturma
     nLabel = new QLabel("Satir  (N):", this);
     mLabel = new QLabel("Sutun  (M):", this);
@@ -27,17 +27,23 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     addMineButton = new QPushButton("Mayin Ekle", this);
     saveButton = new QPushButton("Kaydet", this);
     matrixTable = new QTableWidget(this);
-    findAlgorithmButton = new QPushButton("Algoritma olustur", this);
+    findAlgorithmButton = new QPushButton("Algoritma Modu", this);
 
     // Algoritma modu icin yeni bilesenler
-    setStartButton = new QPushButton("Baslangic ", this);
-    setEndButton = new QPushButton("Bitis ", this);
+    setStartButton = new QPushButton("Baslangic", this);
+    setEndButton = new QPushButton("Bitis", this);
     findPathButton = new QPushButton("Yolu Bul", this);
     resetButton = new QPushButton("Geri Don", this);
     resultsTextEdit = new QTextEdit(this);
-    infoLabel = new QLabel("Baslangic ve bitis sec.", this);
-    skipButton = new QPushButton("Atla", this);   
+    infoLabel = new QLabel("Arac ekleyin.", this);
+    skipButton = new QPushButton("Atla", this);
 
+    // Arac ekleme mekanizmasi
+    addVehicleButton = new QPushButton("Arac Ekle", this);
+    vehicleComboBox = new QComboBox(this);
+    vehicleComboBox->addItem("Kara", (int)FindPath::Vehicle::Land);
+    vehicleComboBox->addItem("Deniz", (int)FindPath::Vehicle::Sea);
+    vehicleComboBox->addItem("Hava", (int)FindPath::Vehicle::Air);
 
     // Baslangic durumu ve buton ayarlari
     currentState = AppState::None;
@@ -53,7 +59,7 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     setEndButton->setCheckable(true);
     findPathButton->setEnabled(false);
 
-    // Duðmeleri ayri yatay layout'lara yerlestirme
+    // Layoutlar
     QHBoxLayout* inputLayout = new QHBoxLayout();
     inputLayout->addWidget(nLabel);
     inputLayout->addWidget(nLineEdit);
@@ -69,29 +75,30 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     actionButtonLayout->addWidget(saveButton);
     actionButtonLayout->addWidget(findAlgorithmButton);
 
-    // Algoritma ile ilgili bilesenlerin layout'u
+    QHBoxLayout* vehicleLayout = new QHBoxLayout();
+    vehicleLayout->addWidget(vehicleComboBox);
+    vehicleLayout->addWidget(addVehicleButton);
+
     QHBoxLayout* algorithmButtonsLayout = new QHBoxLayout();
     algorithmButtonsLayout->addWidget(setStartButton);
     algorithmButtonsLayout->addWidget(setEndButton);
     algorithmButtonsLayout->addWidget(findPathButton);
-    algorithmButtonsLayout->addWidget(skipButton); // YENÝ
-
+    algorithmButtonsLayout->addWidget(skipButton);
 
     QVBoxLayout* algorithmLayout = new QVBoxLayout();
     algorithmLayout->addWidget(infoLabel);
+    algorithmLayout->addLayout(vehicleLayout);
     algorithmLayout->addLayout(algorithmButtonsLayout);
     algorithmLayout->addWidget(resultsTextEdit);
     algorithmLayout->addWidget(resetButton);
-    algorithmButtonsLayout->addWidget(skipButton);
 
-    // Tum layout'lari yoneten ana layout
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(inputLayout);
     mainLayout->addWidget(matrixTable);
     mainLayout->addLayout(actionButtonLayout);
-    mainLayout->addLayout(algorithmLayout,0);
+    mainLayout->addLayout(algorithmLayout, 0);
 
-    // Baslangicta algoritma ile ilgili her seyi gizle
+    // Baslangicta gizle
     infoLabel->hide();
     setStartButton->hide();
     setEndButton->hide();
@@ -99,12 +106,13 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     resultsTextEdit->hide();
     resetButton->hide();
     skipButton->hide();
+    addVehicleButton->hide();
+    vehicleComboBox->hide();
 
-    // main layout pencereye ayarla
     setLayout(mainLayout);
     setWindowTitle("Matrix Uygulamasi");
 
-    // Sinyal ve slot baðlantilari
+    // Sinyal-slot baglantilari
     connect(createButton, &QPushButton::clicked, this, &QtWidgetsApplication2::createMatrix);
     connect(loadButton, &QPushButton::clicked, this, &QtWidgetsApplication2::loadMatrix);
     connect(addObstacleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addObstacleClicked);
@@ -114,19 +122,18 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     connect(saveButton, &QPushButton::clicked, this, &QtWidgetsApplication2::saveMatrix);
     connect(findAlgorithmButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findAlgorithm);
 
-    // Algoritma modu butonlari baðlantilari
     connect(setStartButton, &QPushButton::clicked, this, &QtWidgetsApplication2::setStartPoint);
     connect(setEndButton, &QPushButton::clicked, this, &QtWidgetsApplication2::setEndPoint);
     connect(findPathButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findPath);
     connect(resetButton, &QPushButton::clicked, this, &QtWidgetsApplication2::resetUI);
     connect(skipButton, &QPushButton::clicked, this, &QtWidgetsApplication2::skipVehicle);
 
+    connect(addVehicleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addVehicle);
 }
 
 QtWidgetsApplication2::~QtWidgetsApplication2()
 {
 }
-
 void QtWidgetsApplication2::createMatrix()
 {
     bool okN, okM;
@@ -134,22 +141,22 @@ void QtWidgetsApplication2::createMatrix()
     int m = mLineEdit->text().toInt(&okM);
 
     if (!okN || !okM || n <= 0 || m <= 0) {
-        QMessageBox::warning(this, "Hata", "Lutfen gecerli pozitif tam sayilar girin.");
+        QMessageBox::warning(this, "Hata", "LÃ¼tfen geÃ§erli pozitif tam sayÄ±lar girin.");
         return;
     }
 
     matrixTable->setRowCount(n);
     matrixTable->setColumnCount(m);
 
-    int cellSize = 50;
-    for (int i = 0; i < n; ++i) {
-        matrixTable->setRowHeight(i, cellSize);
-    }
-    for (int j = 0; j < m; ++j) {
-        matrixTable->setColumnWidth(j, cellSize);
-    }
+    int cellSize = VisualizationConfig::CELL_SIZE;   // ðŸ”¹ Buradan Ã§ekiyoruz
 
-    // Hem tabloyu hem m_matrixData’yi doldur
+    for (int i = 0; i < n; ++i)
+        matrixTable->setRowHeight(i, cellSize);
+
+    for (int j = 0; j < m; ++j)
+        matrixTable->setColumnWidth(j, cellSize);
+
+    // HÃ¼creleri doldur
     m_matrixData.clear();
     m_matrixData.resize(n, std::vector<int>(m, 0));
 
@@ -159,8 +166,7 @@ void QtWidgetsApplication2::createMatrix()
             item->setBackground(QColor(139, 69, 19));
             item->setForeground(QColor(0, 0, 0));
             matrixTable->setItem(i, j, item);
-
-            m_matrixData[i][j] = 0; // Kara
+            m_matrixData[i][j] = 0;
         }
     }
 
@@ -169,9 +175,7 @@ void QtWidgetsApplication2::createMatrix()
 
     int tableWidth = m * cellSize + matrixTable->verticalHeader()->width();
     int tableHeight = n * cellSize + matrixTable->horizontalHeader()->height();
-    int windowWidth = tableWidth + 50;
-    int windowHeight = tableHeight + 150;
-    this->resize(windowWidth, windowHeight);
+    this->resize(tableWidth + 50, tableHeight + 150);
 
     addObstacleButton->setEnabled(true);
     addSeaButton->setEnabled(true);
@@ -179,6 +183,34 @@ void QtWidgetsApplication2::createMatrix()
     saveButton->setEnabled(true);
     findAlgorithmButton->setEnabled(true);
 }
+
+
+
+void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+
+    if (!matrixTable) return;
+
+    int rows = matrixTable->rowCount();
+    int cols = matrixTable->columnCount();
+    if (rows == 0 || cols == 0) return;
+
+    // Tablo gÃ¶rÃ¼nÃ¼r alanÄ±nÄ± al
+    int w = matrixTable->viewport()->width();
+    int h = matrixTable->viewport()->height();
+
+    // Kare boyutu: hem geniÅŸlik hem yÃ¼kseklik iÃ§in min deÄŸer
+    int cellSize = std::min(w / cols, h / rows);
+
+    for (int r = 0; r < rows; ++r) {
+        matrixTable->setRowHeight(r, cellSize);
+    }
+    for (int c = 0; c < cols; ++c) {
+        matrixTable->setColumnWidth(c, cellSize);
+    }
+}
+
 
 void QtWidgetsApplication2::addObstacleClicked()
 {
@@ -221,19 +253,19 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     QTableWidgetItem* item = matrixTable->item(row, col);
     if (!item) return;
 
-    // 1) Matris Duzenleme Modu: Hangi duzenleme butonu seciliyse, hucreyi ona gore ayarlar ve veriyi gunceller.
+    // 1) Matrix edit mode
     if (currentState == AppState::AddingSea) {
         item->setText("Deniz");
         item->setBackground(QColor(0, 191, 255));
         item->setForeground(QColor(0, 0, 0));
-        m_matrixData[row][col] = 2; // Deniz: 2
+        m_matrixData[row][col] = 2;
         return;
     }
     if (currentState == AppState::AddingObstacle) {
         item->setText("Engel");
         item->setBackground(QColor(0, 0, 0));
         item->setForeground(QColor(255, 255, 255));
-        m_matrixData[row][col] = 1; // Engel: 1
+        m_matrixData[row][col] = 1;
         return;
     }
     if (currentState == AppState::AddingMine) {
@@ -241,60 +273,48 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
             item->setText("X");
             item->setBackground(QColor(0, 191, 255));
             item->setForeground(QColor(255, 0, 0));
-            m_matrixData[row][col] = 3; // Mayin: 3
+            m_matrixData[row][col] = 3;
         }
         else {
-            QMessageBox::warning(this, "Uyari", "Mayin sadece denize yerlestirilebilir.");
+            QMessageBox::warning(this, "Warning", "mayini denize yerlestir.");
         }
         return;
     }
 
-    // ---
-
-    // 2) Koordinat Secimi Modu
+    // 2) Start/End point selection
     if (currentState == AppState::SettingStart || currentState == AppState::SettingEnd) {
         QString cellText = item->text();
-        FindPath::Vehicle currentVehicle = m_vehicles.at(m_vehicleIndex);
 
-        // Secilen konumun arac tipine uygunluðunu kontrol et
-        if (currentVehicle == FindPath::Vehicle::Land && cellText != "Kara") {
-            QMessageBox::warning(this, "Uyari", "Kara araci sadece 'Kara' uzerine baslayabilir/bitebilir.");
+        // validity check
+        if (m_currentVehicle == FindPath::Vehicle::Land && cellText != "Kara") {
+            QMessageBox::warning(this, "Warning", "kara aracini kara parcasina koy.'.");
             return;
         }
-        else if (currentVehicle == FindPath::Vehicle::Sea && cellText != "Deniz" && cellText != "X") {
-            QMessageBox::warning(this, "Uyari", "Deniz araci sadece 'Deniz' veya 'Mayin' uzerine baslayabilir/bitebilir.");
+        else if (m_currentVehicle == FindPath::Vehicle::Sea && cellText != "Deniz" && cellText != "X") {
+            QMessageBox::warning(this, "Warning", "deniz aracini denize veya mayinin ustune koy.");
             return;
         }
 
         if (currentState == AppState::SettingStart) {
-            // Baslangic noktasini kaydet ve bitis noktasi moduna gec
-            m_startPoints[currentVehicle] = { row, col };
-            infoLabel->setText(QString("Lutfen %1 araci icin bitis noktasini secin.").arg(vehicleToText(currentVehicle)));
+            m_tempStart = { row, col };
+            infoLabel->setText(QString("%1 vehicle: baslangic bitis noktasi sec")
+                .arg(vehicleToText(m_currentVehicle)));
             currentState = AppState::SettingEnd;
         }
         else if (currentState == AppState::SettingEnd) {
-            // Bitis noktasini kaydet
-            m_endPoints[currentVehicle] = { row, col };
-            resultsTextEdit->append(QString("-> %1 araci icin baslangic: (%2, %3), Bitis: (%4, %5)").arg(vehicleToText(currentVehicle)).arg(m_startPoints[currentVehicle].r).arg(m_startPoints[currentVehicle].c).arg(m_endPoints[currentVehicle].r).arg(m_endPoints[currentVehicle].c));
+            VehicleTask task;
+            task.type = m_currentVehicle;
+            task.start = m_tempStart;
+            task.end = { row, col };
 
-            // Bir sonraki araca gecis yap
-            m_vehicleIndex++;
+            m_vehicleTasks.append(task);
 
-            if (m_vehicleIndex < m_vehicles.size()) {
-                // Hâlâ islenecek araclar var
-                currentState = AppState::SettingStart;
-                infoLabel->setText(QString("Lutfen %1 araci icin baslangic noktasini secin.").arg(vehicleToText(m_vehicles.at(m_vehicleIndex))));
-            }
-            else {
-                // Tum araclarin koordinatlari belirlendi
-                currentState = AppState::None;
-                infoLabel->setText("Tum araclarin baslangic ve bitis noktalari belirlendi.");
-                findPathButton->show(); // Artik "Yolu Bul" butonu gorunebilir.
-                findPathButton->setEnabled(true);
+            resultsTextEdit->append(QString("-> %1 vehicle: baslangic (%2,%3), bitis (%4,%5)")
+                .arg(vehicleToText(m_currentVehicle))
+                .arg(task.start.r).arg(task.start.c)
+                .arg(task.end.r).arg(task.end.c));
 
-                skipButton->hide();
-                skipButton->setEnabled(false);
-            }
+            currentState = AppState::None;
         }
     }
 }
@@ -355,92 +375,43 @@ void QtWidgetsApplication2::saveMatrix()
 void QtWidgetsApplication2::findPath()
 {
     resultsTextEdit->clear();
-    resultsTextEdit->append("--- Yol Bulma baslatildi ---");
+    resultsTextEdit->append("--- Yol bulma baslatildi ---");
+    infoLabel->clear();  
 
     ThreadManager* manager = new ThreadManager(this);
 
     connect(manager, &ThreadManager::landFinished, this, [=](FindPath::PathResult res) {
-        if (!res.nodes.empty())
-        {
-            // total adim sayisi
-            int stepCount = res.nodes.size() - 1;
-
-            // definitionstan hizi cek 
-            Speed vehicleSpeeds;
-            float landSpeed = vehicleSpeeds.land;
-
-            //gecen zamaný goster 
-            float timeInSeconds =  (stepCount) / landSpeed;
-
-            // Display the results.
-            resultsTextEdit->append(
-                QString("Kara araci icin yol bulundu: Toplam %1 adim.").arg(stepCount));
-            resultsTextEdit->append(
-                QString("Yaklasik yol suresi: %1 saniye.").arg(timeInSeconds, 0, 'f', 2));
-
-            // adimlari göster
-            QString path;
-            for (const auto& cell : res.nodes) {
-                path += QString("(%1,%2) ").arg(cell.r).arg(cell.c);
-            }
-            resultsTextEdit->append("Yol: " + path);
-        }
-        else
-        {
-            resultsTextEdit->append("Kara araci aktive edilmedi.");
-        }
+        Speed speeds;
+        printAndVisualizeResult("Kara", res, speeds.land,
+            VisualizationConfig::LAND_COLOR,
+            VisualizationConfig::LAND_WIDTH);
         });
 
     connect(manager, &ThreadManager::seaFinished, this, [=](FindPath::PathResult res) {
-        if (!res.nodes.empty())
-        {
-            
-        }
-        else
-        {
-            resultsTextEdit->append("Deniz araci aktive edilmedi.");
-        }
+        Speed speeds;
+        printAndVisualizeResult("Deniz", res, speeds.sea,
+            VisualizationConfig::SEA_COLOR,
+            VisualizationConfig::SEA_WIDTH,
+            true);
         });
 
     connect(manager, &ThreadManager::airFinished, this, [=](FindPath::PathResult res) {
-        if (!res.nodes.empty()) { // PathResult'ýn boþ olmadýðýný kontrol et
-            Speed vehicleSpeeds;
-            float timeInSeconds = res.distance / vehicleSpeeds.air;
-
-            resultsTextEdit->append(
-                QString("Hava araci icin yol bulundu: Toplam %1 birim mesafe. (Yaklasik %2 saniye)")
-                .arg(res.distance, 0, 'f', 2) // Virgülden sonra 2 basamak göster
-                .arg(timeInSeconds, 0, 'f', 2));
-
-            // Hava aracýnýn yolu düz bir çizgi olduðu için sadece baþlangýç ve bitiþ noktalarýný göster.
-            QString path;
-            path += QString("(%1,%2) ").arg(res.nodes[0].r).arg(res.nodes[0].c);
-            path += "--> ";
-            path += QString("(%1,%2)").arg(res.nodes[1].r).arg(res.nodes[1].c);
-
-            resultsTextEdit->append("Yol: " + path);
-        }
-        else {
-            resultsTextEdit->append("Hava araci aktive edilmedi.");
-        }
+        Speed speeds;
+        printAndVisualizeResult("Hava", res, speeds.air,
+            VisualizationConfig::AIR_COLOR,
+            VisualizationConfig::AIR_WIDTH);
         });
 
-    if (m_startPoints.contains(FindPath::Vehicle::Land))
-        manager->runLand(m_matrixData,
-            m_startPoints[FindPath::Vehicle::Land],
-            m_endPoints[FindPath::Vehicle::Land]);
-
-    if (m_startPoints.contains(FindPath::Vehicle::Sea))
-        manager->runSea(m_matrixData,
-            m_startPoints[FindPath::Vehicle::Sea],
-            m_endPoints[FindPath::Vehicle::Sea]);
-
-    if (m_startPoints.contains(FindPath::Vehicle::Air))
-        manager->runAir(m_matrixData,
-            m_startPoints[FindPath::Vehicle::Air],
-            m_endPoints[FindPath::Vehicle::Air]);
+ 
+    for (const auto& task : m_vehicleTasks) {
+        if (task.type == FindPath::Vehicle::Land)
+            manager->runLand(m_matrixData, task.start, task.end, matrixTable);
+        else if (task.type == FindPath::Vehicle::Sea)
+            manager->runSea(m_matrixData, task.start, task.end, matrixTable);
+        else if (task.type == FindPath::Vehicle::Air)
+            manager->runAir(m_matrixData, task.start, task.end, matrixTable);
+    }
 }
-
 
 void QtWidgetsApplication2::loadMatrix()
 {
@@ -484,7 +455,7 @@ void QtWidgetsApplication2::loadMatrix()
 
     int rows = m_matrixData.size();
 
-    // Boyutlarin gecerliliðini kontrol et
+    // Boyutlarin gecerliliÄŸini kontrol et
     if (rows <= 0 || cols <= 0) {
         QMessageBox::warning(this, "Hata", "Dosyada gecerli matris verisi bulunamadi.");
         return;
@@ -533,7 +504,6 @@ void QtWidgetsApplication2::loadMatrix()
 }
 void QtWidgetsApplication2::findAlgorithm()
 {
-    // once matrisin olusturulduðunu kontrol et
     if (m_matrixData.empty() || m_matrixData[0].empty()) {
         QMessageBox::warning(this, "Hata", "Lutfen once bir matris olusturun veya yukleyin.");
         return;
@@ -551,24 +521,20 @@ void QtWidgetsApplication2::findAlgorithm()
     addMineButton->hide();
     saveButton->hide();
     findAlgorithmButton->hide();
-	skipButton->show(); 
 
     infoLabel->show();
     resultsTextEdit->show();
     resetButton->show();
-    findPathButton->hide(); // Baslangicta gizle
-    
+    addVehicleButton->show();
+    vehicleComboBox->show();
 
-    // Ýslenecek arac listesini olustur ve indeksi sifirla
-    m_vehicles = { FindPath::Vehicle::Land, FindPath::Vehicle::Sea, FindPath::Vehicle::Air };
-    m_vehicleIndex = 0;
+    findPathButton->show();
+    findPathButton->setEnabled(true);
 
-    // Uygulamanin durumunu baslangic noktasi secimine ayarla
-    currentState = AppState::SettingStart;
-
-    // Kullaniciya ilk araci icin baslangic noktasi secmesini soyle
-    infoLabel->setText(QString("Lutfen **%1** araci icin baslangic noktasini secin.").arg(vehicleToText(m_vehicles.at(m_vehicleIndex))));
+    infoLabel->setText("Arac ekleyin ve baslangic/bitis noktasi secin.");
 }
+
+
 
 void QtWidgetsApplication2::setStartPoint()
 {
@@ -616,24 +582,54 @@ QString QtWidgetsApplication2::vehicleToText(FindPath::Vehicle v) {
 
 void QtWidgetsApplication2::skipVehicle()
 {
-    resultsTextEdit->append(QString("-> **%1** araci atlandi.").arg(vehicleToText(m_vehicles.at(m_vehicleIndex))));
+    resultsTextEdit->append(QString("-> %1 araci atlandi.")
+        .arg(vehicleToText(m_currentVehicle)));
 
-    // Bir sonraki araca gecis yap
-    m_vehicleIndex++;
-
-    if (m_vehicleIndex < m_vehicles.size()) {
-        // Hâlâ islenecek araclar var
-        currentState = AppState::SettingStart;
-        infoLabel->setText(QString("Lutfen **%1** araci icin baslangic noktasini secin.").arg(vehicleToText(m_vehicles.at(m_vehicleIndex))));
-    }
-    else {
-        // Tum araclarin koordinatlari belirlendi veya atlandi
-        currentState = AppState::None;
-        infoLabel->setText("Tum araclarin baslangic ve bitis noktalari belirlendi veya atlandi.");
-        findPathButton->show();
-        findPathButton->setEnabled(true);
-        skipButton->hide();
-		skipButton->setEnabled(false);
-    }
+    currentState = AppState::None;
+    infoLabel->setText("baska arac ekleyebilirsiniz.");
 }
 
+    
+void QtWidgetsApplication2::addVehicle()
+{
+    int vType = vehicleComboBox->currentData().toInt();
+    m_currentVehicle = (FindPath::Vehicle)vType;
+
+    infoLabel->setText(QString("%1 araci icin baslangic noktasi secin.")
+        .arg(vehicleToText(m_currentVehicle)));
+    currentState = AppState::SettingStart;
+}
+
+void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName,
+    const FindPath::PathResult& res,
+    double speed,
+    QColor color,
+    int lineWidth,
+    bool showMines)
+{
+    if (!res.nodes.empty()) {
+        float timeInSeconds = res.distance / speed;
+
+        resultsTextEdit->append(
+            QString("%1 araci: %2 adim (tahmini %3 sec).")
+            .arg(vehicleName)
+            .arg(res.distance, 0, 'f', 2)
+            .arg(timeInSeconds, 0, 'f', 2));
+
+        QString path;
+        for (const auto& cell : res.nodes)
+            path += QString("(%1,%2) ").arg(cell.r).arg(cell.c);
+        resultsTextEdit->append("yol: " + path);
+
+        if (showMines && !res.mines.empty()) {
+            resultsTextEdit->append("Bulunan mayinlar:");
+            for (const auto& mine : res.mines)
+                resultsTextEdit->append(QString("-> (%1,%2)").arg(mine.r).arg(mine.c));
+        }
+
+       
+    }
+    else {
+        resultsTextEdit->append(QString("%1 araci icin yol bulunamadi.").arg(vehicleName));
+    }
+}

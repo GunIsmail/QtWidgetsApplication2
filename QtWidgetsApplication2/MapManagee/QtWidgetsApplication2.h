@@ -11,17 +11,19 @@
 #include <QInputDialog>
 #include <Qlist>
 #include <QMap>
+#include <Qvector>
 #include "FindAlgorithmWindow.h"
 #include "FindPath.h"
 #include "ui_QtWidgetsApplication2.h" 
 #include "VehicleSelectionDialog.h"
 #include "ThreadManager/threadManager.h"
 #include "definitions.h"
+#include "visualization.h"
 
 #include <QtWidgets/QMainWindow> 
 
 
-// Uygulama durumlarýný tanýmlayan bir enum
+
 enum class AppState {
     None,
     AddingSea,
@@ -53,6 +55,8 @@ private slots:
     void findPath();
     void resetUI();
     void skipVehicle();
+    void addVehicle();
+    void resizeEvent(QResizeEvent* event);
 
 
 private:
@@ -67,18 +71,20 @@ private:
     QPushButton* addMineButton; 
     QPushButton* saveButton;
     QPushButton* findAlgorithmButton;
-    QTableWidget* matrixTable;
-    QLabel* nLabel;
-    QLabel* mLabel;
+    QPushButton* addVehicleButton;
     QPushButton* setStartButton;
     QPushButton* setEndButton;
     QPushButton* findPathButton;
     QPushButton* resetButton;
     QPushButton* skipButton;
-    QTextEdit* resultsTextEdit;
+    QLabel* nLabel;
+    QLabel* mLabel;
     QLabel* infoLabel;
+    QTextEdit* resultsTextEdit;
 	QTableWidgetItem* startPointItem = nullptr;
     QTableWidgetItem* endPointItem = nullptr;
+    QTableWidget* matrixTable;
+    QComboBox* vehicleComboBox;
 
 
     std::vector<std::vector<int>> m_matrixData;
@@ -97,14 +103,30 @@ private:
     QList<FindPath::Vehicle> m_vehicles;
     int m_vehicleIndex = 0;
 
+    FindPath::Vehicle m_currentVehicle;
     // Yardýmcý fonksiyon
     QString vehicleToText(FindPath::Vehicle v);
 
+    struct VehicleTask {
+        FindPath::Vehicle type;
+        FindPath::Cell start;
+        FindPath::Cell end;
+    };
 
+    // Eklenecek degiskenler
+    QVector<VehicleTask> m_vehicleTasks;
+    FindPath::Cell m_tempStart;
 
     AppState currentState;
     QString m_currentFilePath;
-   
+
+    void printAndVisualizeResult(const QString& vehicleName,
+        const FindPath::PathResult& res,
+        double speed,
+        QColor color,
+        int lineWidth,
+        bool showMines = false);
+
 };
 
 #endif // QTWidgetsApplication2_H

@@ -66,7 +66,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile />
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\ThreadManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManagee;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\VehicleManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\visualizationManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\ThreadManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManagee;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\VehicleManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ThreadManager\threadManager.cpp" />
+    <ClCompile Include="visualizationManager\visualization.cpp" />
     <ClCompile Include="VehicleSelectionDialog.cpp" />
     <QtRcc Include="QtWidgetsApplication2.qrc" />
     <QtUic Include="QtWidgetsApplication2.ui" />
@@ -115,6 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="ThreadManager\threadManager.h" />
+    <ClInclude Include="visualizationManager\visualization.h" />
     <ClInclude Include="VehicleManager\sea\sea.h" />
     <ClInclude Include="VehicleManager\land\land.h" />
     <ClInclude Include="VehicleManager\air\air.h" />

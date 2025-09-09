@@ -1,28 +1,31 @@
-#include "threadManager.h"
-#include "../VehicleManager/land/land.h"
-#include "../VehicleManager/sea/sea.h"
-#include "../VehicleManager/air/air.h"
+ï»¿#include "threadmanager.h"
+#include "land\land.h"
+#include "sea\sea.h"
+#include "air\air.h"
 #include <QtConcurrent>
 
 ThreadManager::ThreadManager(QObject* parent) : QObject(parent) {}
 
-void ThreadManager::runLand(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal) {
+void ThreadManager::runLand(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal, QTableWidget* table) {
     QtConcurrent::run([=]() {
-        FindPath::PathResult result = Land::aStar(grid, start, goal);
-        emit landFinished(result);
+        Visualization viz(table);
+        auto res = Land::aStar(grid, start, goal, &viz);
+        emit landFinished(res);
         });
 }
 
-void ThreadManager::runSea(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal) {
-	//todo buraya deniz yolu algoritmasi eklenecek
+void ThreadManager::runSea(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal, QTableWidget* table) {
+    QtConcurrent::run([=]() {
+        Visualization viz(table);
+        auto res = Sea::parallelSearch(grid, start, goal, &viz);
+        emit seaFinished(res);
+        });
 }
 
-void ThreadManager::runAir(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal) {
-	//todo buraya hava yolu algoritmasi eklenecek
-    
+void ThreadManager::runAir(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal, QTableWidget* table) {
     QtConcurrent::run([=]() {
-        // air::calculatePath fonksiyonunu çaðýr
-        FindPath::PathResult result = Air::findPath (grid, start, goal);
-        emit airFinished(result);
+        Visualization viz(table);
+        auto res = Air::findPath(grid, start, goal, &viz);
+        emit airFinished(res);
         });
 }
