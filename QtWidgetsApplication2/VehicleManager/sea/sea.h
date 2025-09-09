@@ -10,7 +10,7 @@ public:
         const FindPath::Grid& grid,
         FindPath::Cell start,
         FindPath::Cell goal,
-        Visualization* viz);   
+        Visualization* viz,double speed);   
 };
 
 #endif // SEA_H

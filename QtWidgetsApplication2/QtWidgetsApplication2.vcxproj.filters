@@ -32,11 +32,11 @@
     <QtUic Include="QtWidgetsApplication2.ui">
       <Filter>Form Files</Filter>
     </QtUic>
+    <QtRcc Include="resources.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="definitions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -61,10 +61,13 @@
     <ClCompile Include="VehicleSelectionDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="visualizationManager\visualization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ThreadManager\threadManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="visualizationManager\visualization.cpp">
+    <ClCompile Include="definitions\definitions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,6 +88,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="visualizationManager\visualization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="definitions\definitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -114,5 +120,16 @@
     <QtMoc Include="ThreadManager\threadManager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icons\plane.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icons\ship.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icons\tank.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

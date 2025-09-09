@@ -18,7 +18,7 @@ namespace VisualizationConfig {
     const QColor LAND_COLOR = QColor(0, 128, 0);   // yeþil
     const QColor SEA_COLOR = QColor(0, 0, 255);   // mavi
     const QColor AIR_COLOR = QColor(255, 0, 0);   // kýrmýzý
-    const QColor SCAN_COLOR = QColor(199, 21, 133);   // medium violet purple 
+    const QColor SCAN_COLOR = QColor(199,21,133);   // medium violet purple 
     const QColor SEARCH_COLOR = QColor(255, 255, 0); // sarý
 
     const QColor OBSTACLE_COLOR = QColor(0, 0, 0);           // engel siyah
@@ -27,7 +27,7 @@ namespace VisualizationConfig {
     const QColor LAND_BG_COLOR = QColor(139, 69, 19);         // kahverengi kara zemini
     const QColor LAND_TEXT_COLOR = QColor(139, 69, 19);
 
-    const QColor SEA_TEXT_COLOR = QColor(0, 0, 255);
+    const QColor SEA_TEXT_COLOR = QColor(0, 0, 255); 
     const QColor MINE_TEXT_COLOR = QColor(255, 0, 0);
 
     // Çizgi kalýnlýklarý
@@ -35,10 +35,9 @@ namespace VisualizationConfig {
     constexpr int SEA_WIDTH = 3;
     constexpr int AIR_WIDTH = 2;
 
-    inline QIcon airIcon() { return QIcon("icons/plane.png"); }
-    inline QIcon landIcon() { return QIcon("icons/tank.png"); }
-    inline QIcon seaIcon() { return QIcon("icons/ship.png"); }
-
-
+    const QIcon AIR_ICON = QIcon(":/icons/plane.png");
+    const QIcon LAND_ICON = QIcon(":/icons/tank.png");
+    const QIcon SEA_ICON = QIcon(":/icons/ship.png");
 }
+
 #endif // DEFINITIONS_H

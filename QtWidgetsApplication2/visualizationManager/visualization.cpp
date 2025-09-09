@@ -27,3 +27,7 @@ void Visualization::visualizePath(const std::vector<FindPath::Cell>& path,
         QThread::msleep(delayMs); // adým adým animasyon
     }
 }
+QTableWidget* Visualization::table() const 
+{
+    return m_table; 
+}

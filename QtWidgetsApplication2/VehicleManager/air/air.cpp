@@ -1,13 +1,17 @@
 #include "air.h"
 #include "definitions.h"
+#include "visualization.h"   // table eriþimi için
 #include <QThread>
 #include <QCoreApplication>
 #include <cmath>
 
+
+
 FindPath::PathResult Air::findPath(const FindPath::Grid& grid,
     FindPath::Cell start,
     FindPath::Cell goal,
-    Visualization* viz)
+    Visualization* viz,
+    double speed)
 {
     FindPath::PathResult result;
 
@@ -19,6 +23,8 @@ FindPath::PathResult Air::findPath(const FindPath::Grid& grid,
 
     result.nodes.push_back(start);
 
+    FindPath::Cell prev = start;
+
     while (r != goal.r || c != goal.c) {
         if (r != goal.r) r += dr;
         if (c != goal.c) c += dc;
@@ -27,13 +33,30 @@ FindPath::PathResult Air::findPath(const FindPath::Grid& grid,
         result.nodes.push_back(cell);
 
         if (viz) {
-            viz->visualizeStep(cell, VisualizationConfig::AIR_COLOR);
+            auto table = viz->table(); 
+            if (table) {
+                // önceki hücredeki ikonu temizle
+                QTableWidgetItem* prevItem = table->item(prev.r, prev.c);
+                if (prevItem) {
+                    prevItem->setIcon(QIcon());
+                    prevItem->setBackground(VisualizationConfig::AIR_COLOR);
+                }
+
+                // yeni hücreye uçaðý koy
+                QTableWidgetItem* item = table->item(cell.r, cell.c);
+                if (item) {
+                    item->setIcon(VisualizationConfig::airIcon());
+                }
+            }
+
+            prev = cell;
+
             QCoreApplication::processEvents();
-            QThread::msleep(VisualizationConfig::STEP_DELAY_MS);
+            QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / speed)));
         }
     }
 
-    // Öklidyen mesafe
+    // öklid algoritma mesafesi
     double dx = static_cast<double>(goal.r - start.r);
     double dy = static_cast<double>(goal.c - start.c);
     result.distance = std::sqrt(dx * dx + dy * dy);

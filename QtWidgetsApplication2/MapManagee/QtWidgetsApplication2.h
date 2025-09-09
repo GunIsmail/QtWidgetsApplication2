@@ -57,6 +57,8 @@ private slots:
     void skipVehicle();
     void addVehicle();
     void resizeEvent(QResizeEvent* event);
+    void  keyPressEvent(QKeyEvent* event);
+
 
 
 private:

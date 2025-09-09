@@ -11,6 +11,8 @@
 #include <Qstring>
 #include <QTextEdit>
 #include <QComboBox>
+#include <QKeyEvent>
+#include <QPixmap>
 
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
@@ -148,7 +150,7 @@ void QtWidgetsApplication2::createMatrix()
     matrixTable->setRowCount(n);
     matrixTable->setColumnCount(m);
 
-    int cellSize = VisualizationConfig::CELL_SIZE;   // 🔹 Buradan çekiyoruz
+    int cellSize = VisualizationConfig::CELL_SIZE;   
 
     for (int i = 0; i < n; ++i)
         matrixTable->setRowHeight(i, cellSize);
@@ -256,23 +258,24 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     // 1) Matrix edit mode
     if (currentState == AppState::AddingSea) {
         item->setText("Deniz");
-        item->setBackground(QColor(0, 191, 255));
-        item->setForeground(QColor(0, 0, 0));
+        item->setBackground(VisualizationConfig::SEA_COLOR);     
+        item->setForeground(VisualizationConfig::SEA_TEXT_COLOR); 
         m_matrixData[row][col] = 2;
         return;
     }
+
     if (currentState == AppState::AddingObstacle) {
         item->setText("Engel");
-        item->setBackground(QColor(0, 0, 0));
-        item->setForeground(QColor(255, 255, 255));
+        item->setBackground(VisualizationConfig::OBSTACLE_COLOR);
+        item->setForeground(VisualizationConfig::OBSTACLE_TEXT_COLOR);
         m_matrixData[row][col] = 1;
         return;
     }
     if (currentState == AppState::AddingMine) {
         if (item->text() == "Deniz" || item->text() == "X") {
             item->setText("X");
-            item->setBackground(QColor(0, 191, 255));
-            item->setForeground(QColor(255, 0, 0));
+            item->setBackground(VisualizationConfig::SEA_COLOR);
+            item->setForeground(VisualizationConfig::MINE_TEXT_COLOR);
             m_matrixData[row][col] = 3;
         }
         else {
@@ -374,9 +377,39 @@ void QtWidgetsApplication2::saveMatrix()
 }
 void QtWidgetsApplication2::findPath()
 {
+    // Tam ekrana geç
+    this->showFullScreen();
+
+   
+    matrixTable->show();
+    infoLabel->show();
+
+    // Diğer widget’ları gizle
+    nLabel->hide();
+    mLabel->hide();
+    nLineEdit->hide();
+    mLineEdit->hide();
+    createButton->hide();
+    loadButton->hide();
+    addObstacleButton->hide();
+    addSeaButton->hide();
+    addMineButton->hide();
+    saveButton->hide();
+    findAlgorithmButton->hide();
+   
+    setStartButton->hide();
+    setEndButton->hide();
+    findPathButton->hide();
+    skipButton->hide();
+    addVehicleButton->hide();
+    vehicleComboBox->hide();
+    resultsTextEdit->hide();
+
+    resetButton->show();
+
     resultsTextEdit->clear();
     resultsTextEdit->append("--- Yol bulma baslatildi ---");
-    infoLabel->clear();  
+    infoLabel->clear();
 
     ThreadManager* manager = new ThreadManager(this);
 
@@ -402,7 +435,6 @@ void QtWidgetsApplication2::findPath()
             VisualizationConfig::AIR_WIDTH);
         });
 
- 
     for (const auto& task : m_vehicleTasks) {
         if (task.type == FindPath::Vehicle::Land)
             manager->runLand(m_matrixData, task.start, task.end, matrixTable);
@@ -412,6 +444,7 @@ void QtWidgetsApplication2::findPath()
             manager->runAir(m_matrixData, task.start, task.end, matrixTable);
     }
 }
+
 
 void QtWidgetsApplication2::loadMatrix()
 {
@@ -471,25 +504,29 @@ void QtWidgetsApplication2::loadMatrix()
             int value = m_matrixData[i][j];
             QTableWidgetItem* item = new QTableWidgetItem();
 
-            if (value == 0) {
+            if (value == 0) 
+            {
                 item->setText("Kara");
-                item->setBackground(QColor(139, 69, 19));
-                item->setForeground(QColor(0, 0, 0));
+                item->setBackground(VisualizationConfig::LAND_BG_COLOR);
+                item->setForeground((VisualizationConfig::LAND_TEXT_COLOR));
             }
-            else if (value == 1) {
+            else if (value == 1) 
+            {
                 item->setText("Engel");
-                item->setBackground(QColor(0, 0, 0));
-                item->setForeground(QColor(255, 255, 255));
+                item->setBackground(VisualizationConfig::OBSTACLE_COLOR);
+                item->setForeground((VisualizationConfig::OBSTACLE_TEXT_COLOR));
             }
-            else if (value == 2) {
+            else if (value == 2) 
+            {
                 item->setText("Deniz");
-                item->setBackground(QColor(0, 191, 255));
-                item->setForeground(QColor(0, 0, 0));
+                item->setBackground(VisualizationConfig::SEA_COLOR);        
+                item->setForeground((VisualizationConfig::SEA_TEXT_COLOR));
             }
-            else if (value == 3) {
+            else if (value == 3) 
+            {
                 item->setText("X");
-                item->setBackground(QColor(0, 191, 255));
-                item->setForeground(QColor(255, 0, 0));
+                item->setBackground(VisualizationConfig::SEA_COLOR);
+                item->setForeground((VisualizationConfig::MINE_TEXT_COLOR));
             }
             matrixTable->setItem(i, j, item);
         }
@@ -534,8 +571,6 @@ void QtWidgetsApplication2::findAlgorithm()
     infoLabel->setText("Arac ekleyin ve baslangic/bitis noktasi secin.");
 }
 
-
-
 void QtWidgetsApplication2::setStartPoint()
 {
     // once bitis secim modunu kapatalim
@@ -567,10 +602,7 @@ void QtWidgetsApplication2::setEndPoint()
 }
 
 
-void QtWidgetsApplication2::resetUI()
-{
-	// 
-}
+
 QString QtWidgetsApplication2::vehicleToText(FindPath::Vehicle v) {
     switch (v) {
     case FindPath::Vehicle::Land: return "Kara";
@@ -600,22 +632,18 @@ void QtWidgetsApplication2::addVehicle()
     currentState = AppState::SettingStart;
 }
 
-void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName,
-    const FindPath::PathResult& res,
-    double speed,
-    QColor color,
-    int lineWidth,
-    bool showMines)
+void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName, const FindPath::PathResult& res, double speed, QColor color, int lineWidth,bool showMines)
 {
     if (!res.nodes.empty()) {
         float timeInSeconds = res.distance / speed;
-
-        resultsTextEdit->append(
-            QString("%1 araci: %2 adim (tahmini %3 sec).")
+        QMessageBox::information(this,
+            "Sonuç",
+            QString("%1 aracı tamamladı!\n\nAdım: %2\nSüre: %3 saniye")
             .arg(vehicleName)
-            .arg(res.distance, 0, 'f', 2)
+            .arg(res.distance)
             .arg(timeInSeconds, 0, 'f', 2));
 
+     
         QString path;
         for (const auto& cell : res.nodes)
             path += QString("(%1,%2) ").arg(cell.r).arg(cell.c);
@@ -632,4 +660,86 @@ void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName,
     else {
         resultsTextEdit->append(QString("%1 araci icin yol bulunamadi.").arg(vehicleName));
     }
+}
+void QtWidgetsApplication2::resetUI()
+{
+    this->showNormal();
+    // 1) State ve geçici verileri temizle
+    currentState = AppState::None;
+    m_vehicleTasks.clear();
+    m_tempStart = { -1, -1 };
+    infoLabel->clear();
+
+    // 2) Algoritma modundaki buton ve alanları gizle
+    infoLabel->hide();
+    setStartButton->hide();
+    setEndButton->hide();
+    findPathButton->hide();
+    resultsTextEdit->hide();
+    resetButton->hide();
+    skipButton->hide();
+    addVehicleButton->hide();
+    vehicleComboBox->hide();
+
+    // 3) Normal edit modundaki butonları geri getir
+    nLabel->show();
+    mLabel->show();
+    nLineEdit->show();
+    mLineEdit->show();
+    createButton->show();
+    loadButton->show();
+    addObstacleButton->show();
+    addSeaButton->show();
+    addMineButton->show();
+    saveButton->show();
+    findAlgorithmButton->show();
+
+    // 4) m_matrixData'dan tabloyu yeniden çiz
+    if (!m_matrixData.empty()) {
+        int rows = m_matrixData.size();
+        int cols = m_matrixData[0].size();
+        matrixTable->setRowCount(rows);
+        matrixTable->setColumnCount(cols);
+
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                int value = m_matrixData[i][j];
+                QTableWidgetItem* item = new QTableWidgetItem();
+                if (value == 0) { // Kara
+                    item->setText("Kara");
+                    item->setBackground(VisualizationConfig::LAND_BG_COLOR);
+                    item->setForeground(VisualizationConfig::LAND_TEXT_COLOR);
+                }
+                else if (value == 1) { // Engel
+                    item->setText("Engel");
+                    item->setBackground(VisualizationConfig::OBSTACLE_COLOR);
+                    item->setForeground(VisualizationConfig::OBSTACLE_TEXT_COLOR);
+                }
+                else if (value == 2) { // Deniz
+                    item->setText("Deniz");
+                    item->setBackground(VisualizationConfig::SEA_COLOR);
+                    item->setForeground(VisualizationConfig::SEA_TEXT_COLOR);
+                }
+                else if (value == 3) { // Mayın
+                    item->setText("X");
+                    item->setBackground(VisualizationConfig::SEA_COLOR);
+                    item->setForeground(VisualizationConfig::MINE_TEXT_COLOR);
+                }
+
+                matrixTable->setItem(i, j, item);
+            }
+        }
+    }
+
+
+    resultsTextEdit->clear();
+
+    QMessageBox::information(this, "Reset", "harita resetlendi.");
+}
+void QtWidgetsApplication2::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_Escape) {
+        resetUI();
+    }
+
+    QWidget::keyPressEvent(event);
 }

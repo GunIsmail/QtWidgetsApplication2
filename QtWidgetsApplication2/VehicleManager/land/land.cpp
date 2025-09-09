@@ -1,6 +1,5 @@
 ﻿#include "land.h"
 #include "definitions.h"
-
 #include <queue>
 #include <limits>
 #include <algorithm>
@@ -31,7 +30,7 @@ static bool passableForLand(const FindPath::Grid& grid, int r, int c) {
 FindPath::PathResult Land::aStar(
     const FindPath::Grid& grid,
     FindPath::Cell start,
-    FindPath::Cell goal,
+    FindPath::Cell goal, double speed,
     Visualization* viz)
 {
     FindPath::PathResult out;
@@ -73,10 +72,30 @@ FindPath::PathResult Land::aStar(
             out.distance = out.nodes.size() - 1;
 
             if (viz) {
-                for (auto& cell : out.nodes) {
-                    viz->visualizeStep(cell, VisualizationConfig::LAND_COLOR);
-                    QCoreApplication::processEvents();
-                    QThread::msleep(VisualizationConfig::STEP_DELAY_MS);
+                auto table = viz->table();
+                if (table) {
+                    FindPath::Cell prev = start;
+
+                    for (auto& cell : out.nodes) {
+                        // önceki hücreyi temizle
+                        if (!(cell == start)) {
+                            QTableWidgetItem* prevItem = table->item(prev.r, prev.c);
+                            if (prevItem) {
+                                prevItem->setIcon(QIcon());
+                                prevItem->setBackground(VisualizationConfig::LAND_COLOR);
+                            }
+                        }
+
+                        // yeni hücreye tank koy
+                        QTableWidgetItem* item = table->item(cell.r, cell.c);
+                        if (item) {
+                            item->setIcon(VisualizationConfig::landIcon()); // tank
+                        }
+
+                        prev = cell;
+                        QCoreApplication::processEvents();
+                        QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / speed)));
+                    }
                 }
             }
             return out;

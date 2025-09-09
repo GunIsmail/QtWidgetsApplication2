@@ -10,7 +10,9 @@ public:
         const FindPath::Grid& grid,
         FindPath::Cell start,
         FindPath::Cell goal,
+        double speed,
         Visualization* viz = nullptr  // gui boymaa ýcýn
+      
     );
 };
 

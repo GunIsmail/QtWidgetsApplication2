@@ -9,7 +9,7 @@ public:
     static FindPath::PathResult findPath(const FindPath::Grid& grid,
         FindPath::Cell start,
         FindPath::Cell goal,
-        Visualization* viz);
+        Visualization* viz,double speed);
 };
 
 #endif // AIR_H

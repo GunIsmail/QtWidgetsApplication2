@@ -12,6 +12,7 @@ public:
 
     // Tek bir hücreyi renklendir
     void visualizeStep(const FindPath::Cell& cell, QColor color);
+    QTableWidget* table() const;  
 
     // Yol boyunca adým adým hücreleri renklendir
     void visualizePath(const std::vector<FindPath::Cell>& path,

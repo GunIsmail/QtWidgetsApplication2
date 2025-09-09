@@ -20,13 +20,13 @@ FindPath::PathResult FindPath::findPath(const Grid& grid,
 {
     switch (vehicle) {
     case Vehicle::Land:
-        return Land::aStar(grid, start, goal, viz);
+        return Land::aStar(grid, start, goal,Speed::land, viz);
 
     case Vehicle::Sea:
-        return Sea::parallelSearch(grid, start, goal, viz);
+        return Sea::parallelSearch(grid, start, goal, viz,Speed::sea);
 
     case Vehicle::Air:
-        return Air::findPath(grid, start, goal, viz);
+        return Air::findPath(grid, start, goal, viz,Speed::air);
 
     default:
         return {};
