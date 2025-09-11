@@ -6,9 +6,11 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QVBoxLayout>
-
-// Ana uygulamanýzýn baðlý olduðu FindPath::Vehicle enum'unu dahil edin
+#include "vehicle/vehicle.h"
 #include "FindPath.h" 
+#include "VehicleManager/land/land.h"
+#include "VehicleManager/sea/sea.h"
+#include "VehicleManager/air/air.h"
 
 class VehicleSelectionDialog : public QDialog
 {
@@ -16,7 +18,7 @@ class VehicleSelectionDialog : public QDialog
 
 public:
     explicit VehicleSelectionDialog(QWidget* parent = nullptr);
-    QList<FindPath::Vehicle> getSelectedVehicles() const;
+    QList<Vehicle*> getSelectedVehicles() const;
 
 private:
     QCheckBox* landCheckBox;

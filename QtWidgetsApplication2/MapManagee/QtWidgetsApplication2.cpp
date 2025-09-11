@@ -1,18 +1,5 @@
 ﻿#include "QtWidgetsApplication2.h"
-#include <QMessageBox>
-#include <QHeaderView>
-#include <QColor>
-#include <QFileDialog>
-#include <QTextStream>
-#include <QFile>
-#include <vector>
-#include <QStringList>
-#include <QInputDialog>
-#include <Qstring>
-#include <QTextEdit>
-#include <QComboBox>
-#include <QKeyEvent>
-#include <QPixmap>
+
 
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
@@ -43,9 +30,9 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     // Arac ekleme mekanizmasi
     addVehicleButton = new QPushButton("Arac Ekle", this);
     vehicleComboBox = new QComboBox(this);
-    vehicleComboBox->addItem("Kara", (int)FindPath::Vehicle::Land);
-    vehicleComboBox->addItem("Deniz", (int)FindPath::Vehicle::Sea);
-    vehicleComboBox->addItem("Hava", (int)FindPath::Vehicle::Air);
+    vehicleComboBox->addItem("Kara");
+    vehicleComboBox->addItem("Deniz");
+    vehicleComboBox->addItem("Hava");
 
     // Baslangic durumu ve buton ayarlari
     currentState = AppState::None;
@@ -186,8 +173,6 @@ void QtWidgetsApplication2::createMatrix()
     findAlgorithmButton->setEnabled(true);
 }
 
-
-
 void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -212,7 +197,6 @@ void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
         matrixTable->setColumnWidth(c, cellSize);
     }
 }
-
 
 void QtWidgetsApplication2::addObstacleClicked()
 {
@@ -255,15 +239,14 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     QTableWidgetItem* item = matrixTable->item(row, col);
     if (!item) return;
 
-    // 1) Matrix edit mode
+    // Edit mode
     if (currentState == AppState::AddingSea) {
         item->setText("Deniz");
-        item->setBackground(VisualizationConfig::SEA_COLOR);     
-        item->setForeground(VisualizationConfig::SEA_TEXT_COLOR); 
+        item->setBackground(VisualizationConfig::SEA_COLOR);
+        item->setForeground(VisualizationConfig::SEA_TEXT_COLOR);
         m_matrixData[row][col] = 2;
         return;
     }
-
     if (currentState == AppState::AddingObstacle) {
         item->setText("Engel");
         item->setBackground(VisualizationConfig::OBSTACLE_COLOR);
@@ -279,40 +262,40 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
             m_matrixData[row][col] = 3;
         }
         else {
-            QMessageBox::warning(this, "Warning", "mayini denize yerlestir.");
+            QMessageBox::warning(this, "Warning", "Mayını denize yerleştirin.");
         }
         return;
     }
 
-    // 2) Start/End point selection
+    // Start/End selection
     if (currentState == AppState::SettingStart || currentState == AppState::SettingEnd) {
         QString cellText = item->text();
 
-        // validity check
-        if (m_currentVehicle == FindPath::Vehicle::Land && cellText != "Kara") {
-            QMessageBox::warning(this, "Warning", "kara aracini kara parcasina koy.'.");
+        if (dynamic_cast<LandVehicle*>(m_currentVehicle) && cellText != "Kara") {
+            QMessageBox::warning(this, "Warning", "Kara aracı sadece kara parçasına konabilir.");
             return;
         }
-        else if (m_currentVehicle == FindPath::Vehicle::Sea && cellText != "Deniz" && cellText != "X") {
-            QMessageBox::warning(this, "Warning", "deniz aracini denize veya mayinin ustune koy.");
+        else if (dynamic_cast<SeaVehicle*>(m_currentVehicle) &&
+            (cellText != "Deniz" && cellText != "X")) {
+            QMessageBox::warning(this, "Warning", "Deniz aracı sadece denize veya mayına konabilir.");
             return;
         }
 
         if (currentState == AppState::SettingStart) {
             m_tempStart = { row, col };
-            infoLabel->setText(QString("%1 vehicle: baslangic bitis noktasi sec")
+            infoLabel->setText(QString("%1 aracı: bitiş noktası seç")
                 .arg(vehicleToText(m_currentVehicle)));
             currentState = AppState::SettingEnd;
         }
         else if (currentState == AppState::SettingEnd) {
             VehicleTask task;
-            task.type = m_currentVehicle;
+            task.vehicle = m_currentVehicle;
             task.start = m_tempStart;
             task.end = { row, col };
 
             m_vehicleTasks.append(task);
 
-            resultsTextEdit->append(QString("-> %1 vehicle: baslangic (%2,%3), bitis (%4,%5)")
+            resultsTextEdit->append(QString("-> %1: başlangıç (%2,%3), bitiş (%4,%5)")
                 .arg(vehicleToText(m_currentVehicle))
                 .arg(task.start.r).arg(task.start.c)
                 .arg(task.end.r).arg(task.end.c));
@@ -321,6 +304,8 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         }
     }
 }
+
+
 
 void QtWidgetsApplication2::saveMatrix()
 {
@@ -377,73 +362,54 @@ void QtWidgetsApplication2::saveMatrix()
 }
 void QtWidgetsApplication2::findPath()
 {
-    // Tam ekrana geç
     this->showFullScreen();
 
-   
     matrixTable->show();
     infoLabel->show();
-
-    // Diğer widget’ları gizle
-    nLabel->hide();
-    mLabel->hide();
-    nLineEdit->hide();
-    mLineEdit->hide();
-    createButton->hide();
-    loadButton->hide();
-    addObstacleButton->hide();
-    addSeaButton->hide();
-    addMineButton->hide();
-    saveButton->hide();
-    findAlgorithmButton->hide();
-   
-    setStartButton->hide();
-    setEndButton->hide();
-    findPathButton->hide();
-    skipButton->hide();
-    addVehicleButton->hide();
-    vehicleComboBox->hide();
-    resultsTextEdit->hide();
-
     resetButton->show();
 
     resultsTextEdit->clear();
-    resultsTextEdit->append("--- Yol bulma baslatildi ---");
+    resultsTextEdit->append("--- Yol bulma başlatıldı ---");
     infoLabel->clear();
 
     ThreadManager* manager = new ThreadManager(this);
 
-    connect(manager, &ThreadManager::landFinished, this, [=](FindPath::PathResult res) {
-        Speed speeds;
-        printAndVisualizeResult("Kara", res, speeds.land,
-            VisualizationConfig::LAND_COLOR,
-            VisualizationConfig::LAND_WIDTH);
-        });
-
-    connect(manager, &ThreadManager::seaFinished, this, [=](FindPath::PathResult res) {
-        Speed speeds;
-        printAndVisualizeResult("Deniz", res, speeds.sea,
-            VisualizationConfig::SEA_COLOR,
-            VisualizationConfig::SEA_WIDTH,
-            true);
-        });
-
-    connect(manager, &ThreadManager::airFinished, this, [=](FindPath::PathResult res) {
-        Speed speeds;
-        printAndVisualizeResult("Hava", res, speeds.air,
-            VisualizationConfig::AIR_COLOR,
-            VisualizationConfig::AIR_WIDTH);
+    connect(manager, &ThreadManager::vehicleFinished, this,
+        [=](QString vehicleName, FindPath::PathResult res) {
+            Speed speeds;
+            if (vehicleName == "Kara") {
+                printAndVisualizeResult(vehicleName, res, speeds.land,
+                    VisualizationConfig::LAND_COLOR,
+                    VisualizationConfig::LAND_WIDTH);
+            }
+            else if (vehicleName == "Deniz") {
+                printAndVisualizeResult(vehicleName, res, speeds.sea,
+                    VisualizationConfig::SEA_COLOR,
+                    VisualizationConfig::SEA_WIDTH,
+                    true);
+            }
+            else if (vehicleName == "Hava") {
+                printAndVisualizeResult(vehicleName, res, speeds.air,
+                    VisualizationConfig::AIR_COLOR,
+                    VisualizationConfig::AIR_WIDTH);
+            }
         });
 
     for (const auto& task : m_vehicleTasks) {
-        if (task.type == FindPath::Vehicle::Land)
-            manager->runLand(m_matrixData, task.start, task.end, matrixTable);
-        else if (task.type == FindPath::Vehicle::Sea)
-            manager->runSea(m_matrixData, task.start, task.end, matrixTable);
-        else if (task.type == FindPath::Vehicle::Air)
-            manager->runAir(m_matrixData, task.start, task.end, matrixTable);
+        Vehicle* v = task.vehicle;
+        double speed = 1.0;
+
+        if (dynamic_cast<LandVehicle*>(v)) speed = Speed::land;
+        else if (dynamic_cast<SeaVehicle*>(v)) speed = Speed::sea;
+        else if (dynamic_cast<AirVehicle*>(v)) speed = Speed::air;
+
+        if (v) {
+            manager->runVehicle(v, m_matrixData, task.start, task.end, matrixTable, speed);
+        }
     }
 }
+
+
 
 
 void QtWidgetsApplication2::loadMatrix()
@@ -600,17 +566,12 @@ void QtWidgetsApplication2::setEndPoint()
         infoLabel->setText("Bitis iptal .");
     }
 }
-
-
-
-QString QtWidgetsApplication2::vehicleToText(FindPath::Vehicle v) {
-    switch (v) {
-    case FindPath::Vehicle::Land: return "Kara";
-    case FindPath::Vehicle::Sea:  return "Deniz";
-    case FindPath::Vehicle::Air:  return "Hava";
-    }
-    return "?";
+QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
+    if (!v) return "?";
+    return v->name();   
 }
+
+
 
 void QtWidgetsApplication2::skipVehicle()
 {
@@ -620,17 +581,26 @@ void QtWidgetsApplication2::skipVehicle()
     currentState = AppState::None;
     infoLabel->setText("baska arac ekleyebilirsiniz.");
 }
-
-    
 void QtWidgetsApplication2::addVehicle()
 {
-    int vType = vehicleComboBox->currentData().toInt();
-    m_currentVehicle = (FindPath::Vehicle)vType;
+    QString selected = vehicleComboBox->currentText();
 
-    infoLabel->setText(QString("%1 araci icin baslangic noktasi secin.")
+    if (selected == "Kara") {
+        m_currentVehicle = new LandVehicle();
+    }
+    else if (selected == "Deniz") {
+        m_currentVehicle = new SeaVehicle();
+    }
+    else if (selected == "Hava") {
+        m_currentVehicle = new AirVehicle();
+    }
+
+    infoLabel->setText(QString("%1 aracı için başlangıç noktası seçin.")
         .arg(vehicleToText(m_currentVehicle)));
     currentState = AppState::SettingStart;
 }
+
+
 
 void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName, const FindPath::PathResult& res, double speed, QColor color, int lineWidth,bool showMines)
 {

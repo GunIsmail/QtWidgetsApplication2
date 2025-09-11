@@ -1,19 +1,17 @@
 #include "sea.h"
-#include "FindPath.h"
-#include "visualization.h"
-#include "definitions.h"
 #include <QThread>
 #include <QCoreApplication>
-#include <QDebug>
 #include <set>
+#include <QDebug>
 
-FindPath::PathResult Sea::parallelSearch(
+FindPath::PathResult SeaVehicle::findPath(
     const FindPath::Grid& grid,
     FindPath::Cell start,
     FindPath::Cell goal,
     Visualization* viz,
     double speed)
-{
+
+{   
     FindPath::PathResult out;
     std::vector<FindPath::Cell> path;
     std::set<std::pair<int, int>> mineSet; // mayýnlarý tekrar etmeden tutmak için
@@ -74,7 +72,7 @@ FindPath::PathResult Sea::parallelSearch(
 
         if (painted) {
             QCoreApplication::processEvents();
-            QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / speed)));
+            QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / Speed::sea)));
         }
         };
 
@@ -83,11 +81,13 @@ FindPath::PathResult Sea::parallelSearch(
         if ((j - startCol) % 2 == 0) {
             // yukarýdan aþaðýya
             for (int i = startRow; i <= endRow; i++) {
-                if (grid[i][j] == 1 || grid[i][j] == 0) continue;
+                if (grid[i][j] == 1 || grid[i][j] == 0) {
+                    break; // kara ya da yasak hücreye denk gelince sütunu kes
+                }
 
                 path.push_back({ i, j });
                 if (viz) {
-                    scanCell(i, j, VisualizationConfig::SEA_COLOR, true); // gemi burada
+                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true); // tarama rengi
                     scanSides(i, j);
                 }
             }
@@ -95,11 +95,13 @@ FindPath::PathResult Sea::parallelSearch(
         else {
             // aþaðýdan yukarýya
             for (int i = endRow; i >= startRow; i--) {
-                if (grid[i][j] == 1 || grid[i][j] == 0) continue;
+                if (grid[i][j] == 1 || grid[i][j] == 0) {
+                    break; // kara ya da yasak hücreye denk gelince sütunu kes
+                }
 
                 path.push_back({ i, j });
                 if (viz) {
-                    scanCell(i, j, VisualizationConfig::SEA_COLOR, true); // gemi burada
+                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true); // tarama rengi
                     scanSides(i, j);
                 }
             }
@@ -107,11 +109,24 @@ FindPath::PathResult Sea::parallelSearch(
     }
 
     out.nodes = path;
-    out.distance = static_cast<int>(path.size()) - 1;
+    out.distance = static_cast<int>(path.size()) - 1; //  adim sayisi o ana kadar ne kadar oldugu. 
 
-    // mayýn listesini set'ten aktar
+    // mayýn listesini setten al 
     for (auto& m : mineSet) {
         out.mines.push_back({ m.first, m.second });
+    }
+
+    // Mayýnlarý kýrmýzýya boya
+    for (auto& m : out.mines) {
+        int r = m.r;
+        int c = m.c;
+        if (viz && viz->table()) {
+            QTableWidgetItem* item = viz->table()->item(r, c);
+            if (item) {
+                item->setBackground(VisualizationConfig::MINE_COLOR); // mayýn kýrmýzý
+                item->setIcon(VisualizationConfig::mineIcon());       // opsiyonel: mayýn ikonu
+            }
+        }
     }
 
     return out;

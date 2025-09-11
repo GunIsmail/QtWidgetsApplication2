@@ -7,7 +7,8 @@
 
 
 
-FindPath::PathResult Air::findPath(const FindPath::Grid& grid,
+FindPath::PathResult AirVehicle::findPath(
+    const FindPath::Grid& grid,
     FindPath::Cell start,
     FindPath::Cell goal,
     Visualization* viz,
@@ -39,7 +40,11 @@ FindPath::PathResult Air::findPath(const FindPath::Grid& grid,
                 QTableWidgetItem* prevItem = table->item(prev.r, prev.c);
                 if (prevItem) {
                     prevItem->setIcon(QIcon());
-                    prevItem->setBackground(VisualizationConfig::AIR_COLOR);
+
+                    if (grid[prev.r][prev.c] != 3) // eger o bolgede mayýn varsa boyama guvenlýk acigi
+                    {
+                        prevItem->setBackground(VisualizationConfig::AIR_COLOR);
+                    }
                 }
 
                 // yeni hücreye uçaðý koy

@@ -1,7 +1,5 @@
 #include "findpath.h"
-#include "land/land.h"
-#include "sea/sea.h"
-#include "air/air.h"   
+#include "vehicle/vehicle.h"
 #include "definitions.h"
 
 bool FindPath::inBounds(int r, int c, int R, int C) {
@@ -12,23 +10,26 @@ int FindPath::manhattan(Cell a, Cell b) {
     return std::abs(a.r - b.r) + std::abs(a.c - b.c);
 }
 
-FindPath::PathResult FindPath::findPath(const Grid& grid,
+FindPath::PathResult FindPath::findPathWithVehicle(
+    Vehicle* vehicle,
+    const Grid& grid,
     Cell start,
     Cell goal,
-    Vehicle vehicle,
-    Visualization* viz)   
+    Visualization* viz)
 {
-    switch (vehicle) {
-    case Vehicle::Land:
-        return Land::aStar(grid, start, goal,Speed::land, viz);
+    if (!vehicle) return {};
 
-    case Vehicle::Sea:
-        return Sea::parallelSearch(grid, start, goal, viz,Speed::sea);
-
-    case Vehicle::Air:
-        return Air::findPath(grid, start, goal, viz,Speed::air);
-
-    default:
-        return {};
+    // hýz tanýmlarý definitions.h içinden alýnýr
+    double speed = 1.0;
+    if (vehicle->name() == "Kara") {
+        speed = Speed::land;
     }
+    else if (vehicle->name() == "Deniz") {
+        speed = Speed::sea;
+    }
+    else if (vehicle->name() == "Hava") {
+        speed = Speed::air;
+    }
+
+    return vehicle->findPath(grid, start, goal, viz, speed);
 }

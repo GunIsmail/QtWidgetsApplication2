@@ -1,31 +1,24 @@
 ﻿#include "threadmanager.h"
-#include "land\land.h"
-#include "sea\sea.h"
-#include "air\air.h"
 #include <QtConcurrent>
+#include "visualization.h"
 
 ThreadManager::ThreadManager(QObject* parent) : QObject(parent) {}
 
-void ThreadManager::runLand(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal, QTableWidget* table) {
+void ThreadManager::runVehicle(Vehicle* vehicle,
+    const FindPath::Grid& grid,
+    FindPath::Cell start,
+    FindPath::Cell goal,
+    QTableWidget* table,double speed)
+{
     QtConcurrent::run([=]() {
         Visualization viz(table);
-        auto res = Land::aStar(grid, start, goal, Speed::land, &viz);
-        emit landFinished(res);
-        });
-}
 
-void ThreadManager::runSea(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal, QTableWidget* table) {
-    QtConcurrent::run([=]() {
-        Visualization viz(table);
-        auto res = Sea::parallelSearch(grid, start, goal, &viz,Speed::sea);
-        emit seaFinished(res);
-        });
-}
+        double speed = 1.0;
+        if (vehicle->name() == "Kara") speed = Speed::land;
+        else if (vehicle->name() == "Deniz") speed = Speed::sea;
+        else if (vehicle->name() == "Hava") speed = Speed::air;
 
-void ThreadManager::runAir(const FindPath::Grid& grid, FindPath::Cell start, FindPath::Cell goal, QTableWidget* table) {
-    QtConcurrent::run([=]() {
-        Visualization viz(table);
-        auto res = Air::findPath(grid, start, goal, &viz,Speed::air);
-        emit airFinished(res);
+        auto res = vehicle->findPath(grid, start, goal, &viz, speed);
+        emit vehicleFinished(vehicle->name(), res);
         });
 }

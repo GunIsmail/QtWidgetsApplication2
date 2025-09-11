@@ -1,16 +1,14 @@
-﻿#ifndef SEA_H
-#define SEA_H
+﻿#pragma once
+#include "vehicle/vehicle.h"
 
-#include "FindPath.h"
-#include "visualization.h"
-
-class Sea {
+class SeaVehicle : public Vehicle {
 public:
-    static FindPath::PathResult parallelSearch(
+    FindPath::PathResult findPath(
         const FindPath::Grid& grid,
         FindPath::Cell start,
         FindPath::Cell goal,
-        Visualization* viz,double speed);   
-};
+        Visualization* viz,
+        double speed) override;
 
-#endif // SEA_H
+    QString name() const override { return "Deniz"; }
+};

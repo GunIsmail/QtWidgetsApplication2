@@ -31,17 +31,19 @@ VehicleSelectionDialog::VehicleSelectionDialog(QWidget* parent)
     mainLayout->addLayout(buttonLayout);
 }
 
-QList<FindPath::Vehicle> VehicleSelectionDialog::getSelectedVehicles() const
+QList<Vehicle*> VehicleSelectionDialog::getSelectedVehicles() const
 {
-    QList<FindPath::Vehicle> selectedVehicles;
+    QList<Vehicle*> selectedVehicles;
+
     if (landCheckBox->isChecked()) {
-        selectedVehicles.append(FindPath::Vehicle::Land);
+        selectedVehicles.append(new LandVehicle());
     }
     if (seaCheckBox->isChecked()) {
-        selectedVehicles.append(FindPath::Vehicle::Sea);
+        selectedVehicles.append(new SeaVehicle());
     }
     if (airCheckBox->isChecked()) {
-        selectedVehicles.append(FindPath::Vehicle::Air);
+        selectedVehicles.append(new AirVehicle());
     }
+
     return selectedVehicles;
 }

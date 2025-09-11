@@ -1,16 +1,14 @@
-#ifndef FIND_PATH_H
-#define FIND_PATH_H
+#ifndef FINDPATH_H
+#define FINDPATH_H
 
 #include <vector>
 #include <cmath>
-#include "definitions.h"
-#include <QDebug>
+#include <QString>
 
-class Visualization;
+class Visualization;  // ileri bildirim
+class Vehicle;        // abstract vehicle sýnýfý
 
-class FindPath {
-public:
-    enum class Vehicle { Land, Sea, Air };
+namespace FindPath {
 
     struct Cell {
         int r, c;
@@ -19,29 +17,26 @@ public:
         }
     };
 
-    using Grid = std::vector<std::vector<int>>;
-
     struct PathResult {
         std::vector<Cell> nodes;
-        std::vector<Cell> mines;
-        double cost = 0.0;     // Land / Sea için
-        double distance = 0.0; // Air için
-        double time = 0.0;     // Air için
+        std::vector<Cell> mines;  // mayýnlý hücreler
+        double distance = 0.0;
     };
 
-    // Ortak yardýmcýlar
-    static bool inBounds(int r, int c, int R, int C);
-    static int manhattan(Cell a, Cell b);
+    using Grid = std::vector<std::vector<int>>;
 
-    // Ana yol bulucu
-    static PathResult findPath(const Grid& grid,
+    // Yardýmcý fonksiyonlar
+    bool inBounds(int r, int c, int R, int C);
+    int manhattan(Cell a, Cell b);
+
+    // Polimorfik yol bulma
+    PathResult findPathWithVehicle(
+        Vehicle* vehicle,
+        const Grid& grid,
         Cell start,
         Cell goal,
-        Vehicle vehicle,
-        Visualization* viz);   
+        Visualization* viz
+    );
+}
 
-    // Air özel
-    static PathResult findAirPath(Cell start, Cell goal, const Speed& speed);
-};
-
-#endif // FIND_PATH_H
+#endif // FINDPATH_H

@@ -27,11 +27,12 @@ static bool passableForLand(const FindPath::Grid& grid, int r, int c) {
     return grid[r][c] == 0; // 0 = Kara
 }
 
-FindPath::PathResult Land::aStar(
+FindPath::PathResult LandVehicle::findPath(
     const FindPath::Grid& grid,
     FindPath::Cell start,
-    FindPath::Cell goal, double speed,
-    Visualization* viz)
+    FindPath::Cell goal,
+    Visualization* viz,
+    double speed)
 {
     FindPath::PathResult out;
     int R = (int)grid.size();
@@ -94,7 +95,7 @@ FindPath::PathResult Land::aStar(
 
                         prev = cell;
                         QCoreApplication::processEvents();
-                        QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / speed)));
+                        QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / Speed::land)));
                     }
                 }
             }

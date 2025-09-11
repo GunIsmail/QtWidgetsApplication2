@@ -1,15 +1,17 @@
-#ifndef AIR_H
-#define AIR_H
+#pragma once
+#include "vehicle/vehicle.h"
 
-#include "findpath.h"
-#include "visualization.h"
-
-class Air {
+class AirVehicle : public Vehicle {
 public:
-    static FindPath::PathResult findPath(const FindPath::Grid& grid,
+    FindPath::PathResult findPath(
+        const FindPath::Grid& grid,
         FindPath::Cell start,
         FindPath::Cell goal,
-        Visualization* viz,double speed);
-};
+        Visualization* viz,
+        double speed) override;
 
-#endif // AIR_H
+    QString name() const override 
+    {
+        return "Hava";
+    }
+};

@@ -2,35 +2,40 @@
 #define QTWidgetsApplication2_H
 
 #include <QtWidgets/QWidget>
+#include <QMessageBox>
+#include <QHeaderView>
+#include <QColor>
+#include <QFileDialog>
+#include <QTextStream>
+#include <QFile>
+#include <vector>
+#include <QStringList>
+#include <QTextEdit>
+#include <QComboBox>
+#include <QKeyEvent>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTableWidget>
-#include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QInputDialog>
-#include <Qlist>
-#include <QMap>
-#include <Qvector>
-#include "FindAlgorithmWindow.h"
+#include <QList>
 #include "FindPath.h"
-#include "ui_QtWidgetsApplication2.h" 
-#include "VehicleSelectionDialog.h"
 #include "ThreadManager/threadManager.h"
 #include "definitions.h"
 #include "visualization.h"
-
-#include <QtWidgets/QMainWindow> 
-
-
+#include "VehicleManager/vehicle/vehicle.h"
+#include "VehicleManager/land/land.h"
+#include "VehicleManager/sea/sea.h"
+#include "VehicleManager/air/air.h"
 
 enum class AppState {
     None,
     AddingSea,
     AddingObstacle,
-    AddingMine ,
-    SettingStart,   
-    SettingEnd     
+    AddingMine,
+    SettingStart,
+    SettingEnd
 };
 
 class QtWidgetsApplication2 : public QWidget
@@ -45,7 +50,7 @@ private slots:
     void createMatrix();
     void addObstacleClicked();
     void addSeaClicked();
-    void addMineClicked(); 
+    void addMineClicked();
     void cellClicked(int row, int col);
     void saveMatrix();
     void loadMatrix();
@@ -56,21 +61,20 @@ private slots:
     void resetUI();
     void skipVehicle();
     void addVehicle();
-    void resizeEvent(QResizeEvent* event);
-    void  keyPressEvent(QKeyEvent* event);
 
-
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
-    Ui::QtWidgetsApplication2Class ui;
-
+    // UI
     QLineEdit* nLineEdit;
     QLineEdit* mLineEdit;
     QPushButton* createButton;
     QPushButton* loadButton;
     QPushButton* addObstacleButton;
     QPushButton* addSeaButton;
-    QPushButton* addMineButton; 
+    QPushButton* addMineButton;
     QPushButton* saveButton;
     QPushButton* findAlgorithmButton;
     QPushButton* addVehicleButton;
@@ -83,52 +87,32 @@ private:
     QLabel* mLabel;
     QLabel* infoLabel;
     QTextEdit* resultsTextEdit;
-	QTableWidgetItem* startPointItem = nullptr;
-    QTableWidgetItem* endPointItem = nullptr;
     QTableWidget* matrixTable;
     QComboBox* vehicleComboBox;
 
-
+    // Data
     std::vector<std::vector<int>> m_matrixData;
 
-    // Baþlangýç / Bitiþ koordinatlarý
-    int startRow = -1;
-    int startCol = -1;
-    int endRow = -1;
-    int endCol = -1;
-    enum class Vehicle { Land, Sea, Air };
-
-    QMap<FindPath::Vehicle, FindPath::Cell> m_startPoints;
-    QMap<FindPath::Vehicle, FindPath::Cell> m_endPoints;
-
-    // Ýþlenecek araç listesi ve mevcut aracýn indeksi
-    QList<FindPath::Vehicle> m_vehicles;
-    int m_vehicleIndex = 0;
-
-    FindPath::Vehicle m_currentVehicle;
-    // Yardýmcý fonksiyon
-    QString vehicleToText(FindPath::Vehicle v);
-
     struct VehicleTask {
-        FindPath::Vehicle type;
+        Vehicle* vehicle;
         FindPath::Cell start;
         FindPath::Cell end;
     };
 
-    // Eklenecek degiskenler
     QVector<VehicleTask> m_vehicleTasks;
+    Vehicle* m_currentVehicle = nullptr;
     FindPath::Cell m_tempStart;
-
     AppState currentState;
     QString m_currentFilePath;
 
+    // Helpers
+    QString vehicleToText(Vehicle* v);
     void printAndVisualizeResult(const QString& vehicleName,
         const FindPath::PathResult& res,
         double speed,
         QColor color,
         int lineWidth,
         bool showMines = false);
-
 };
 
 #endif // QTWidgetsApplication2_H

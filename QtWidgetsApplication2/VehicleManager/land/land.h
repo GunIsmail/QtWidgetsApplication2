@@ -1,19 +1,18 @@
 #ifndef LAND_H
 #define LAND_H
-
+#include "vehicle/vehicle.h"
 #include "FindPath.h"
 #include "visualization.h"
 
-class Land {
+class LandVehicle : public Vehicle {
 public:
-    static FindPath::PathResult aStar(
+    FindPath::PathResult findPath(
         const FindPath::Grid& grid,
         FindPath::Cell start,
         FindPath::Cell goal,
-        double speed,
-        Visualization* viz = nullptr  // gui boymaa ýcýn
-      
-    );
-};
+        Visualization* viz,
+        double speed) override;
 
+    QString name() const override { return "Kara"; }
+}; 
 #endif // LAND_H
