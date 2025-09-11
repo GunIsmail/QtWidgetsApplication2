@@ -14,6 +14,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     addObstacleButton = new QPushButton("Engel Ekle", this);
     addSeaButton = new QPushButton("Deniz Ekle", this);
     addMineButton = new QPushButton("Mayin Ekle", this);
+    addEnemyButton = new QPushButton("Düşman Ekle", this);
+
     saveButton = new QPushButton("Kaydet", this);
     matrixTable = new QTableWidget(this);
     findAlgorithmButton = new QPushButton("Algoritma Modu", this);
@@ -56,6 +58,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     inputLayout->addWidget(mLineEdit);
     inputLayout->addWidget(createButton);
     inputLayout->addWidget(loadButton);
+    
+
 
     QHBoxLayout* actionButtonLayout = new QHBoxLayout();
     actionButtonLayout->addWidget(addObstacleButton);
@@ -63,10 +67,13 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     actionButtonLayout->addWidget(addMineButton);
     actionButtonLayout->addWidget(saveButton);
     actionButtonLayout->addWidget(findAlgorithmButton);
+    
+
 
     QHBoxLayout* vehicleLayout = new QHBoxLayout();
     vehicleLayout->addWidget(vehicleComboBox);
     vehicleLayout->addWidget(addVehicleButton);
+    vehicleLayout->addWidget(addEnemyButton);
 
     QHBoxLayout* algorithmButtonsLayout = new QHBoxLayout();
     algorithmButtonsLayout->addWidget(setStartButton);
@@ -116,6 +123,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     connect(findPathButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findPath);
     connect(resetButton, &QPushButton::clicked, this, &QtWidgetsApplication2::resetUI);
     connect(skipButton, &QPushButton::clicked, this, &QtWidgetsApplication2::skipVehicle);
+    connect(addEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemies);
+
 
     connect(addVehicleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addVehicle);
 }
@@ -172,7 +181,6 @@ void QtWidgetsApplication2::createMatrix()
     saveButton->setEnabled(true);
     findAlgorithmButton->setEnabled(true);
 }
-
 void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -197,7 +205,6 @@ void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
         matrixTable->setColumnWidth(c, cellSize);
     }
 }
-
 void QtWidgetsApplication2::addObstacleClicked()
 {
     addSeaButton->setChecked(false);
@@ -209,7 +216,6 @@ void QtWidgetsApplication2::addObstacleClicked()
         currentState = AppState::None;
     }
 }
-
 void QtWidgetsApplication2::addSeaClicked()
 {
     addObstacleButton->setChecked(false);
@@ -221,7 +227,6 @@ void QtWidgetsApplication2::addSeaClicked()
         currentState = AppState::None;
     }
 }
-
 void QtWidgetsApplication2::addMineClicked()
 {
     addObstacleButton->setChecked(false);
@@ -233,7 +238,6 @@ void QtWidgetsApplication2::addMineClicked()
         currentState = AppState::None;
     }
 }
-
 void QtWidgetsApplication2::cellClicked(int row, int col)
 {
     QTableWidgetItem* item = matrixTable->item(row, col);
@@ -304,9 +308,6 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         }
     }
 }
-
-
-
 void QtWidgetsApplication2::saveMatrix()
 {
     QString filePathToSave = m_currentFilePath;
@@ -408,10 +409,6 @@ void QtWidgetsApplication2::findPath()
         }
     }
 }
-
-
-
-
 void QtWidgetsApplication2::loadMatrix()
 {
     QString fileName = QFileDialog::getOpenFileName(this, "Matris Yukle", "", "Metin Dosyalari (*.txt);;Tum Dosyalar (*)");
@@ -536,7 +533,6 @@ void QtWidgetsApplication2::findAlgorithm()
 
     infoLabel->setText("Arac ekleyin ve baslangic/bitis noktasi secin.");
 }
-
 void QtWidgetsApplication2::setStartPoint()
 {
     // once bitis secim modunu kapatalim
@@ -551,7 +547,6 @@ void QtWidgetsApplication2::setStartPoint()
         infoLabel->setText("Baslangic secim iptal.");
     }
 }
-
 void QtWidgetsApplication2::setEndPoint()
 {
     // once baslangic secim modunu kapatalim
@@ -570,9 +565,6 @@ QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
     if (!v) return "?";
     return v->name();   
 }
-
-
-
 void QtWidgetsApplication2::skipVehicle()
 {
     resultsTextEdit->append(QString("-> %1 araci atlandi.")
@@ -599,9 +591,6 @@ void QtWidgetsApplication2::addVehicle()
         .arg(vehicleToText(m_currentVehicle)));
     currentState = AppState::SettingStart;
 }
-
-
-
 void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName, const FindPath::PathResult& res, double speed, QColor color, int lineWidth,bool showMines)
 {
     if (!res.nodes.empty()) {
@@ -712,4 +701,44 @@ void QtWidgetsApplication2::keyPressEvent(QKeyEvent* event) {
     }
 
     QWidget::keyPressEvent(event);
+}
+void QtWidgetsApplication2::addEnemies()
+{
+    if (m_matrixData.empty()) {
+        QMessageBox::warning(this, "Hata", "Önce bir harita oluşturun.");
+        return;
+    }
+
+    bool ok;
+    int count = QInputDialog::getInt(this, "Düsman Sayisi",
+        "Kac düsman eklemek istiyorsunuz?",
+        5, 1, 50, 1, &ok);
+    if (!ok) return;
+
+    if (!m_enemyManager) {
+        m_enemyManager = new EnemyManager(m_matrixData);
+    }
+
+    // Random yerleştirme
+    int rows = m_matrixData.size();
+    int cols = m_matrixData[0].size();
+
+    int placed = 0;
+    while (placed < count) {
+        int r = rand() % rows;
+        int c = rand() % cols;
+        if (m_matrixData[r][c] == 0 && !m_enemyManager->isOccupied(r, c)) {
+            m_enemyManager->addEnemy({ r, c });
+            placed++;
+        }
+    }
+
+    
+    if (!m_enemyThread) {
+        Visualization* viz = new Visualization(matrixTable);
+        m_enemyThread = new EnemyThread(m_enemyManager, viz, Speed::enemy);
+        m_enemyThread->start();
+    }
+
+    resultsTextEdit->append(QString("%1 düsman haritaya eklendi.").arg(count));
 }

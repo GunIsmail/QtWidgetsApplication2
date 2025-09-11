@@ -8,6 +8,7 @@ struct Speed {
     static constexpr double land = 3.0;
     static constexpr double sea = 1.0;
     static constexpr double air = 5.0;
+    static constexpr double enemy = 1.0;
 };
 
 // Görselleþtirme ayarlarý
@@ -40,6 +41,7 @@ namespace VisualizationConfig {
     inline QIcon landIcon() { return QIcon("icons/tank.png"); }
     inline QIcon seaIcon() { return QIcon("icons/ship.png"); }
     inline QIcon mineIcon() { return QIcon("icons/mine.png"); }
+    inline QIcon enemyIcon() { return QIcon("icons/enemy.png"); }
 
 
 }

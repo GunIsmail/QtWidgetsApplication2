@@ -8,6 +8,7 @@
 #include <QFileDialog>
 #include <QTextStream>
 #include <QFile>
+#include <QInputDialog>
 #include <vector>
 #include <QStringList>
 #include <QTextEdit>
@@ -28,6 +29,7 @@
 #include "VehicleManager/land/land.h"
 #include "VehicleManager/sea/sea.h"
 #include "VehicleManager/air/air.h"
+#include "EnemyManager/EnemyManager.h"
 
 enum class AppState {
     None,
@@ -61,6 +63,7 @@ private slots:
     void resetUI();
     void skipVehicle();
     void addVehicle();
+    void addEnemies();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -83,6 +86,9 @@ private:
     QPushButton* findPathButton;
     QPushButton* resetButton;
     QPushButton* skipButton;
+    QPushButton* addEnemyButton;
+  
+
     QLabel* nLabel;
     QLabel* mLabel;
     QLabel* infoLabel;
@@ -98,6 +104,8 @@ private:
         FindPath::Cell start;
         FindPath::Cell end;
     };
+    EnemyManager* m_enemyManager = nullptr;
+    EnemyThread* m_enemyThread = nullptr;
 
     QVector<VehicleTask> m_vehicleTasks;
     Vehicle* m_currentVehicle = nullptr;

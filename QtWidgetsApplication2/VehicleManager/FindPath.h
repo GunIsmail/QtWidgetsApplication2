@@ -1,4 +1,4 @@
-#ifndef FINDPATH_H
+ï»¿#ifndef FINDPATH_H
 #define FINDPATH_H
 
 #include <vector>
@@ -6,7 +6,7 @@
 #include <QString>
 
 class Visualization;  // ileri bildirim
-class Vehicle;        // abstract vehicle sýnýfý
+class Vehicle;        // abstract vehicle sÄ±nÄ±fÄ±
 
 namespace FindPath {
 
@@ -19,13 +19,13 @@ namespace FindPath {
 
     struct PathResult {
         std::vector<Cell> nodes;
-        std::vector<Cell> mines;  // mayýnlý hücreler
+        std::vector<Cell> mines;  // mayÄ±nlÄ± hÃ¼creler
         double distance = 0.0;
     };
 
     using Grid = std::vector<std::vector<int>>;
 
-    // Yardýmcý fonksiyonlar
+    // YardÄ±mcÄ± fonksiyonlar
     bool inBounds(int r, int c, int R, int C);
     int manhattan(Cell a, Cell b);
 

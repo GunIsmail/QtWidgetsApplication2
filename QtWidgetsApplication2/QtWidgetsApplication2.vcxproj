@@ -99,6 +99,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="definitions\definitions.cpp" />
+    <ClCompile Include="EnemyManager\EnemyManager.cpp" />
+    <ClCompile Include="VehicleManager\enemies\Enemy.cpp" />
     <ClCompile Include="ThreadManager\threadManager.cpp" />
     <ClCompile Include="VehicleManager\vehicle\vehicle.cpp" />
     <ClCompile Include="visualizationManager\visualization.cpp" />
@@ -119,6 +121,8 @@
   <ItemGroup>
     <QtMoc Include="ThreadManager\threadManager.h" />
     <ClInclude Include="definitions\definitions.h" />
+    <ClInclude Include="EnemyManager\EnemyManager.h" />
+    <ClInclude Include="VehicleManager\enemies\Enemy.h" />
     <ClInclude Include="VehicleManager\vehicle\vehicle.h" />
     <ClInclude Include="visualizationManager\visualization.h" />
     <ClInclude Include="VehicleManager\sea\sea.h" />

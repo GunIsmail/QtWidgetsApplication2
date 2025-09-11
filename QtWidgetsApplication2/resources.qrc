@@ -4,5 +4,7 @@
         <file>icons/ship.png</file>
         <file>icons/tank.png</file>
 	<file>icons/mine.png</file>
+	<file>icons/enemy.png</file>
+
     </qresource>
 </RCC>
