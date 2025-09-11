@@ -7,7 +7,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 
-// A* için node yapısı
+// A* için struct yapisi
 struct Node {
     int r, c;
     int g;
