@@ -21,7 +21,7 @@ const FindPath::Grid& EnemyManager::grid() const {
 
 
 void EnemyManager::addEnemy(const FindPath::Cell& start) {
-    m_enemies.push_back({ start });
+    m_enemies.push_back({ start }); 
 }
 // cagirdiginde tum dusman birimleri hareket etmeye baslatir . 
 void EnemyManager::stepAll() {

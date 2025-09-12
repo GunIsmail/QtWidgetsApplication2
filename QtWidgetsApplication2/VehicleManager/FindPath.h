@@ -29,7 +29,7 @@ namespace FindPath {
     bool inBounds(int r, int c, int R, int C);
     int manhattan(Cell a, Cell b);
 
-    // Polimorfik yol bulma
+    // Polimorfizm saglayan yapi
     PathResult findPathWithVehicle(
         Vehicle* vehicle,
         const Grid& grid,

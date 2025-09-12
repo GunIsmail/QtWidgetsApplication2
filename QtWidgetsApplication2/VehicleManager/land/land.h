@@ -3,6 +3,9 @@
 #include "vehicle/vehicle.h"
 #include "FindPath.h"
 #include "visualization.h"
+#include <EnemyManager/enemyManager.h>
+
+
 
 class LandVehicle : public Vehicle {
 public:
@@ -14,5 +17,5 @@ public:
         double speed) override;
 
     QString name() const override { return "Kara"; }
-}; 
+};
 #endif // LAND_H

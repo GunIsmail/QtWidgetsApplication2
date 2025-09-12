@@ -398,7 +398,7 @@ void QtWidgetsApplication2::findPath()
 
     for (const auto& task : m_vehicleTasks) {
         Vehicle* v = task.vehicle;
-        double speed = 1.0;
+        double speed =0; // default baslat trash deger kalmis olabilri 
 
         if (dynamic_cast<LandVehicle*>(v)) speed = Speed::land;
         else if (dynamic_cast<SeaVehicle*>(v)) speed = Speed::sea;

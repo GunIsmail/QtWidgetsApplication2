@@ -20,7 +20,7 @@ FindPath::PathResult FindPath::findPathWithVehicle(
     if (!vehicle) return {};
 
     // hýz tanýmlarý definitions.h içinden alýnýr
-    double speed = 1.0;
+    double speed=0 ;
     if (vehicle->name() == "Kara") {
         speed = Speed::land;
     }

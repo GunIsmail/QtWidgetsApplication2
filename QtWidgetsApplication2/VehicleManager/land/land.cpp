@@ -6,6 +6,8 @@
 #include <QThread>
 #include <QCoreApplication>
 #include <QDebug>
+#include <EnemyManager/enemyManager.h>
+
 
 // A* için struct yapisi
 struct Node {
