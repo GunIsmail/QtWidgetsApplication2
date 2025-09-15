@@ -63,7 +63,7 @@ const std::vector<EnemyUnit>& EnemyManager::enemies() const { // dusman vectoru 
     return m_enemies;
 }
 
-// o gridde dusman var mý yok mu kontreol eder 
+// o gridde dusman var mý yok mu kontreol eder indexe gore 0 based ; 
 bool EnemyManager::isOccupied(int r, int c) const {
     for (auto& e : m_enemies) {
         if (e.pos.r == r && e.pos.c == c)
