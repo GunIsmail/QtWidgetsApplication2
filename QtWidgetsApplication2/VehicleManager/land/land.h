@@ -3,6 +3,8 @@
 #include "../EnemyManager/EnemyManager.h  "
 #include <QCoreApplication>
 #include <qthread.h>
+#include <Qmessagebox.h>
+#include <qcoreapplication.h>
 
 class LandVehicle : public Vehicle {
 public:

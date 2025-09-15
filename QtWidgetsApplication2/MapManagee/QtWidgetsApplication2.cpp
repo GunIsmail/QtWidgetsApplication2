@@ -1,6 +1,6 @@
 ﻿#include "QtWidgetsApplication2.h"
 
-
+//constructor 
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
 {
@@ -139,7 +139,7 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
 
     connect(addVehicleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addVehicle);
 }
-
+//destructor 
 QtWidgetsApplication2::~QtWidgetsApplication2()
 {
 }
@@ -193,7 +193,6 @@ void QtWidgetsApplication2::createMatrix()
     saveButton->setEnabled(true);
     findAlgorithmButton->setEnabled(true);
 }
-
 void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -254,11 +253,12 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     QTableWidgetItem* item = matrixTable->item(row, col);
     if (!item) return;
 
-    // Edit mode
+    // --- Edit mode ---
     if (currentState == AppState::AddingSea) {
         item->setText("Deniz");
         item->setBackground(VisualizationConfig::SEA_COLOR);
         item->setForeground(VisualizationConfig::SEA_TEXT_COLOR);
+        item->setIcon(QIcon()); // ikon temizle
         m_matrixData[row][col] = 2;
         return;
     }
@@ -266,14 +266,16 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         item->setText("Engel");
         item->setBackground(VisualizationConfig::OBSTACLE_COLOR);
         item->setForeground(VisualizationConfig::OBSTACLE_TEXT_COLOR);
+        item->setIcon(QIcon()); // ikon temizle
         m_matrixData[row][col] = 1;
         return;
     }
     if (currentState == AppState::AddingMine) {
-        if (item->text() == "Deniz" || item->text() == "X") {
+        if (m_matrixData[row][col] == 2 || m_matrixData[row][col] == 3) {
             item->setText("X");
             item->setBackground(VisualizationConfig::SEA_COLOR);
             item->setForeground(VisualizationConfig::MINE_TEXT_COLOR);
+            item->setIcon(QIcon()); // ikon temizle
             m_matrixData[row][col] = 3;
         }
         else {
@@ -282,17 +284,23 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         return;
     }
 
-    // Start/End selection
+    // --- Start/End selection ---
     if (currentState == AppState::SettingStart || currentState == AppState::SettingEnd) {
-        QString cellText = item->text();
+        int val = m_matrixData[row][col]; // hücre tipini data’dan al
 
-        if (dynamic_cast<LandVehicle*>(m_currentVehicle) && cellText != "Kara") {
+        // Kara aracı sadece kara (0) üzerinde olabilir
+        if (dynamic_cast<LandVehicle*>(m_currentVehicle) && val != 0) {
             QMessageBox::warning(this, "Warning", "Kara araci sadece kara parcasina konabilir.");
             return;
         }
-        else if (dynamic_cast<SeaVehicle*>(m_currentVehicle) &&
-            (cellText != "Deniz" && cellText != "X")) {
+        // Deniz aracı sadece deniz (2) veya mayın (3) üzerinde olabilir
+        else if (dynamic_cast<SeaVehicle*>(m_currentVehicle) && (val != 2 && val != 3)) {
             QMessageBox::warning(this, "Warning", "Deniz araci sadece denize veya mayina konabilir.");
+            return;
+        }
+        // Hava aracı: engel (1) üzerine konamaz, diğer tüm zeminlere konabilir
+        else if (dynamic_cast<AirVehicle*>(m_currentVehicle) && val == 1) {
+            QMessageBox::warning(this, "Warning", "Hava araci engelin üstüne konamaz.");
             return;
         }
 
@@ -301,6 +309,10 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
             infoLabel->setText(QString("%1 araci: bitis noktasi sec")
                 .arg(vehicleToText(m_currentVehicle)));
             currentState = AppState::SettingEnd;
+
+            // Başlangıç ikonu ekle
+            item->setIcon(VisualizationConfig::startIcon());
+            item->setText(""); // sadece ikon görünsün
         }
         else if (currentState == AppState::SettingEnd) {
             VehicleTask task;
@@ -316,6 +328,10 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
                 .arg(task.end.r).arg(task.end.c));
 
             currentState = AppState::None;
+
+            // Bitiş ikonu ekle
+            item->setIcon(VisualizationConfig::endIcon());
+            item->setText(""); // sadece ikon görünsün
         }
     }
 }
@@ -616,10 +632,6 @@ void QtWidgetsApplication2::setEndPoint()
         infoLabel->setText("Bitis iptal .");
     }
 }
-QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
-    if (!v) return "?";
-    return v->name();   
-}
 void QtWidgetsApplication2::skipVehicle()
 {
     resultsTextEdit->append(QString("-> %1 araci atlandi.")
@@ -796,4 +808,8 @@ void QtWidgetsApplication2::addEnemies()
     }
 
     resultsTextEdit->append(QString("%1 düsman haritaya eklendi.").arg(count));
+}
+QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
+    if (!v) return "?";
+    return v->name();
 }

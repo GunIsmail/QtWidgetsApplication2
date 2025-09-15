@@ -18,12 +18,30 @@ static const int dc[4] = { 0, 0, -1, 1 };
 
 // Hücre geçilebilir mi (kara + düşman kontrolü)
 static bool passableForLand(const FindPath::Grid& grid, const EnemyManager* enemies, int r, int c) {
+	int safeRadius = 1; // düşman etrafında güvenlik alanı
     if (!FindPath::inBounds(r, c, (int)grid.size(), (int)grid[0].size()))
         return false;
     if (grid[r][c] != 0) return false;       // 0 = kara
-    if (enemies && enemies->isOccupied(r, c)) return false; // düşman varsa geçilmez
+
+    if (enemies) {
+        // Düşman etrafında güvenlik alanı kontrolü
+        for (int dr = -safeRadius; dr <= safeRadius; dr++) {
+            for (int dc = -safeRadius; dc <= safeRadius; dc++) {
+                int nr = r + dr;
+                int nc = c + dc;
+                if (FindPath::inBounds(nr, nc, (int)grid.size(), (int)grid[0].size())) {
+                    if (enemies->isOccupied(nr, nc)) {
+                        return false; // güvenlik alanına girme
+                    }
+                }
+            }
+        }
+    }
+
     return true;
 }
+
+
 
 FindPath::PathResult LandVehicle::findPath(
     const FindPath::Grid& grid,
@@ -94,7 +112,7 @@ FindPath::PathResult LandVehicle::findPath(
         }
     }
 
-    // Başlangıçtan hedefe yol oluştur
+   
     FindPath::Cell cur = start;
     result.nodes.push_back(cur);
 
@@ -133,12 +151,33 @@ FindPath::PathResult LandVehicle::findPath(
                 if (item) {
                     item->setIcon(VisualizationConfig::landIcon());
                 }
+                //  Düşman ile güvenlik alanı çakışma kontrolü
+                if (enemyManager) {
+                    int safeRadius = 1; //guvenlık yaricapi 
+
+                    for (int dr = -safeRadius; dr <= safeRadius; dr++) {
+                        for (int dc = -safeRadius; dc <= safeRadius; dc++) {
+                            int nr = next.r + dr;
+                            int nc = next.c + dc;
+
+                            if (FindPath::inBounds(nr, nc, (int)grid.size(), (int)grid[0].size())) {
+                                if (enemyManager->isOccupied(nr, nc)) {
+                                    QMessageBox::critical(nullptr, "Uyarı",
+                                        QString("Kara aracı düşman güvenlik alanına girdi! (%1,%2)")
+                                        .arg(next.r).arg(next.c));
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                }
 
                 QCoreApplication::processEvents();
-                QThread::msleep(std::max(10, (int)(VisualizationConfig::STEP_DELAY_MS / Speed::land)));
+				// Hız ayarı definitionstan alinir. 
+                QThread::msleep( int(VisualizationConfig::STEP_DELAY_MS / Speed::land));
             }
         }
-        // ------------------------------
+        
 
         cur = next;
     }

@@ -42,6 +42,8 @@ namespace VisualizationConfig {
     inline QIcon seaIcon() { return QIcon("icons/ship.png"); }
     inline QIcon mineIcon() { return QIcon("icons/mine.png"); }
     inline QIcon enemyIcon() { return QIcon("icons/enemy.png"); }
+	inline QIcon startIcon() { return QIcon("icons/start.png"); }
+	inline QIcon endIcon() { return QIcon("icons/end.png"); }
 
 
 }

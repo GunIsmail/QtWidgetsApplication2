@@ -5,6 +5,8 @@
         <file>icons/tank.png</file>
 	<file>icons/mine.png</file>
 	<file>icons/enemy.png</file>
+	<file>icons/start.png</file>
+	<file>icons/end.png</file>
 
     </qresource>
 </RCC>

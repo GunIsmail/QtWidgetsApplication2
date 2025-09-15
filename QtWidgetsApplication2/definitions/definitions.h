@@ -38,6 +38,8 @@ namespace VisualizationConfig {
     const QIcon AIR_ICON = QIcon(":/icons/plane.png");
     const QIcon LAND_ICON = QIcon(":/icons/tank.png");
     const QIcon SEA_ICON = QIcon(":/icons/ship.png");
+    const QIcon START_ICON = QIcon(":/icons/start.png");
+    const QIcon END_ICON = QIcon(":/icons/end.png");
 }
 
 #endif // DEFINITIONS_H
