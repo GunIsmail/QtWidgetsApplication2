@@ -21,6 +21,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QList>
+#include <QTimer>
 #include "FindPath.h"
 #include "ThreadManager/threadManager.h"
 #include "definitions.h"

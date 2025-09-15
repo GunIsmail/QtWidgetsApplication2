@@ -14,7 +14,7 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     addObstacleButton = new QPushButton("Engel Ekle", this);
     addSeaButton = new QPushButton("Deniz Ekle", this);
     addMineButton = new QPushButton("Mayin Ekle", this);
-    addEnemyButton = new QPushButton("Düşman Ekle", this);
+    addEnemyButton = new QPushButton("Düsman Ekle", this);
 
     saveButton = new QPushButton("Kaydet", this);
     matrixTable = new QTableWidget(this);
@@ -90,9 +90,20 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(inputLayout);
-    mainLayout->addWidget(matrixTable);
-    mainLayout->addLayout(actionButtonLayout);
-    mainLayout->addLayout(algorithmLayout, 0);
+
+    // tabloya büyüme hakki ver
+    matrixTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // tabloya daha fazla stretch ver (orneğin 5)
+    mainLayout->addWidget(matrixTable, /*stretch*/ 5);
+
+    // buton layoutlari daha az yer kaplasin (orneğin 1)
+    mainLayout->addLayout(actionButtonLayout, 1);
+    mainLayout->addLayout(algorithmLayout, 2);
+    QTimer::singleShot(0, this, [this]() {
+        QResizeEvent fakeEvent(this->size(), this->size());
+        this->resizeEvent(&fakeEvent);
+        });
 
     // Baslangicta gizle
     infoLabel->hide();
@@ -107,7 +118,7 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
 
     setLayout(mainLayout);
     setWindowTitle("Matrix Uygulamasi");
-
+    showFullScreen();
     // Sinyal-slot baglantilari
     connect(createButton, &QPushButton::clicked, this, &QtWidgetsApplication2::createMatrix);
     connect(loadButton, &QPushButton::clicked, this, &QtWidgetsApplication2::loadMatrix);
@@ -139,14 +150,14 @@ void QtWidgetsApplication2::createMatrix()
     int m = mLineEdit->text().toInt(&okM);
 
     if (!okN || !okM || n <= 0 || m <= 0) {
-        QMessageBox::warning(this, "Hata", "Lütfen geçerli pozitif tam sayılar girin.");
+        QMessageBox::warning(this, "Hata", "Lütfen gecerli pozitif tam sayilar girin.");
         return;
     }
 
     matrixTable->setRowCount(n);
     matrixTable->setColumnCount(m);
 
-    int cellSize = VisualizationConfig::CELL_SIZE;   
+    int cellSize = 5; // 🔹 her hücre 5x5 piksel
 
     for (int i = 0; i < n; ++i)
         matrixTable->setRowHeight(i, cellSize);
@@ -171,9 +182,10 @@ void QtWidgetsApplication2::createMatrix()
     matrixTable->horizontalHeader()->hide();
     matrixTable->verticalHeader()->hide();
 
+    // 🔹 pencereyi tablonun boyutuna gore ayarla
     int tableWidth = m * cellSize + matrixTable->verticalHeader()->width();
     int tableHeight = n * cellSize + matrixTable->horizontalHeader()->height();
-    this->resize(tableWidth + 50, tableHeight + 150);
+    this->resize(tableWidth + 50, tableHeight + 100);
 
     addObstacleButton->setEnabled(true);
     addSeaButton->setEnabled(true);
@@ -181,6 +193,7 @@ void QtWidgetsApplication2::createMatrix()
     saveButton->setEnabled(true);
     findAlgorithmButton->setEnabled(true);
 }
+
 void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
@@ -191,19 +204,17 @@ void QtWidgetsApplication2::resizeEvent(QResizeEvent* event)
     int cols = matrixTable->columnCount();
     if (rows == 0 || cols == 0) return;
 
-    // Tablo görünür alanını al
+    // Gorünen alan boyutlari
     int w = matrixTable->viewport()->width();
     int h = matrixTable->viewport()->height();
 
-    // Kare boyutu: hem genişlik hem yükseklik için min değer
+    // Hücre boyutu = min(genislik/kolon, yükseklik/satir)
     int cellSize = std::min(w / cols, h / rows);
 
-    for (int r = 0; r < rows; ++r) {
+    for (int r = 0; r < rows; ++r)
         matrixTable->setRowHeight(r, cellSize);
-    }
-    for (int c = 0; c < cols; ++c) {
+    for (int c = 0; c < cols; ++c)
         matrixTable->setColumnWidth(c, cellSize);
-    }
 }
 void QtWidgetsApplication2::addObstacleClicked()
 {
@@ -266,7 +277,7 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
             m_matrixData[row][col] = 3;
         }
         else {
-            QMessageBox::warning(this, "Warning", "Mayını denize yerleştirin.");
+            QMessageBox::warning(this, "Warning", "Mayini denize yerlestirin.");
         }
         return;
     }
@@ -276,18 +287,18 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         QString cellText = item->text();
 
         if (dynamic_cast<LandVehicle*>(m_currentVehicle) && cellText != "Kara") {
-            QMessageBox::warning(this, "Warning", "Kara aracı sadece kara parçasına konabilir.");
+            QMessageBox::warning(this, "Warning", "Kara araci sadece kara parcasina konabilir.");
             return;
         }
         else if (dynamic_cast<SeaVehicle*>(m_currentVehicle) &&
             (cellText != "Deniz" && cellText != "X")) {
-            QMessageBox::warning(this, "Warning", "Deniz aracı sadece denize veya mayına konabilir.");
+            QMessageBox::warning(this, "Warning", "Deniz araci sadece denize veya mayina konabilir.");
             return;
         }
 
         if (currentState == AppState::SettingStart) {
             m_tempStart = { row, col };
-            infoLabel->setText(QString("%1 aracı: bitiş noktası seç")
+            infoLabel->setText(QString("%1 araci: bitis noktasi sec")
                 .arg(vehicleToText(m_currentVehicle)));
             currentState = AppState::SettingEnd;
         }
@@ -299,7 +310,7 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
 
             m_vehicleTasks.append(task);
 
-            resultsTextEdit->append(QString("-> %1: başlangıç (%2,%3), bitiş (%4,%5)")
+            resultsTextEdit->append(QString("-> %1: baslangic (%2,%3), bitis (%4,%5)")
                 .arg(vehicleToText(m_currentVehicle))
                 .arg(task.start.r).arg(task.start.c)
                 .arg(task.end.r).arg(task.end.c));
@@ -362,16 +373,60 @@ void QtWidgetsApplication2::saveMatrix()
     }
 }
 void QtWidgetsApplication2::findPath()
-{
+{     // --- diğer widget’lari gizle ---
+    nLabel->hide();
+    mLabel->hide();
+    nLineEdit->hide();
+    mLineEdit->hide();
+    createButton->hide();
+    loadButton->hide();
+    addObstacleButton->hide();
+    addSeaButton->hide();
+    addMineButton->hide();
+    saveButton->hide();
+    findAlgorithmButton->hide();
+    infoLabel->hide();
+    setStartButton->hide();
+    setEndButton->hide();
+    findPathButton->hide();
+    resetButton->hide();
+    skipButton->hide();
+    addVehicleButton->hide();
+    vehicleComboBox->hide();
+    resultsTextEdit->hide();
+
+    // --- sadece tablo kalsin ---
     this->showFullScreen();
-
     matrixTable->show();
-    infoLabel->show();
-    resetButton->show();
 
+    // pencere boyutu
+    int W = this->width();
+    int H = this->height();
+    int rows = matrixTable->rowCount();
+    int cols = matrixTable->columnCount();
+
+    if (rows > 0 && cols > 0) {
+        int cellSize = std::min(W / cols, H / rows);
+
+        for (int r = 0; r < rows; ++r)
+            matrixTable->setRowHeight(r, cellSize);
+        for (int c = 0; c < cols; ++c)
+            matrixTable->setColumnWidth(c, cellSize);
+
+        // tabloyu tam ekran oturt
+        int tableWidth = cols * cellSize;
+        int tableHeight = rows * cellSize;
+
+        int x = (W - tableWidth) / 2;
+        int y = (H - tableHeight) / 2;
+
+        matrixTable->setGeometry(x, y, tableWidth, tableHeight);
+
+    }
+
+    // --- mevcut yol bulma kodun ---
     resultsTextEdit->clear();
-    resultsTextEdit->append("--- Yol bulma başlatıldı ---");
-    infoLabel->clear();
+    resultsTextEdit->append("--- Yol bulma baslatildi ---");
 
     ThreadManager* manager = new ThreadManager(this);
 
@@ -587,7 +642,7 @@ void QtWidgetsApplication2::addVehicle()
         m_currentVehicle = new AirVehicle();
     }
 
-    infoLabel->setText(QString("%1 aracı için başlangıç noktası seçin.")
+    infoLabel->setText(QString("%1 araci icin baslangic noktasi secin.")
         .arg(vehicleToText(m_currentVehicle)));
     currentState = AppState::SettingStart;
 }
@@ -596,8 +651,8 @@ void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName, 
     if (!res.nodes.empty()) {
         float timeInSeconds = res.distance / speed;
         QMessageBox::information(this,
-            "Sonuç",
-            QString("%1 aracı tamamladı!\n\nAdım: %2\nSüre: %3 saniye")
+            "Sonuc",
+            QString("%1 araci tamamladi!\n\nAdim: %2\nSüre: %3 saniye")
             .arg(vehicleName)
             .arg(res.distance)
             .arg(timeInSeconds, 0, 'f', 2));
@@ -623,13 +678,13 @@ void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName, 
 void QtWidgetsApplication2::resetUI()
 {
     this->showNormal();
-    // 1) State ve geçici verileri temizle
+    // 1) State ve gecici verileri temizle
     currentState = AppState::None;
     m_vehicleTasks.clear();
     m_tempStart = { -1, -1 };
     infoLabel->clear();
 
-    // 2) Algoritma modundaki buton ve alanları gizle
+    // 2) Algoritma modundaki buton ve alanlari gizle
     infoLabel->hide();
     setStartButton->hide();
     setEndButton->hide();
@@ -640,7 +695,7 @@ void QtWidgetsApplication2::resetUI()
     addVehicleButton->hide();
     vehicleComboBox->hide();
 
-    // 3) Normal edit modundaki butonları geri getir
+    // 3) Normal edit modundaki butonlari geri getir
     nLabel->show();
     mLabel->show();
     nLineEdit->show();
@@ -653,7 +708,7 @@ void QtWidgetsApplication2::resetUI()
     saveButton->show();
     findAlgorithmButton->show();
 
-    // 4) m_matrixData'dan tabloyu yeniden çiz
+    // 4) m_matrixData'dan tabloyu yeniden ciz
     if (!m_matrixData.empty()) {
         int rows = m_matrixData.size();
         int cols = m_matrixData[0].size();
@@ -679,7 +734,7 @@ void QtWidgetsApplication2::resetUI()
                     item->setBackground(VisualizationConfig::SEA_COLOR);
                     item->setForeground(VisualizationConfig::SEA_TEXT_COLOR);
                 }
-                else if (value == 3) { // Mayın
+                else if (value == 3) { // Mayin
                     item->setText("X");
                     item->setBackground(VisualizationConfig::SEA_COLOR);
                     item->setForeground(VisualizationConfig::MINE_TEXT_COLOR);
@@ -705,7 +760,7 @@ void QtWidgetsApplication2::keyPressEvent(QKeyEvent* event) {
 void QtWidgetsApplication2::addEnemies()
 {
     if (m_matrixData.empty()) {
-        QMessageBox::warning(this, "Hata", "Önce bir harita oluşturun.");
+        QMessageBox::warning(this, "Hata", "once bir harita olusturun.");
         return;
     }
 
@@ -719,7 +774,7 @@ void QtWidgetsApplication2::addEnemies()
         m_enemyManager = new EnemyManager(m_matrixData);
     }
 
-    // Random yerleştirme
+    // Random yerlestirme
     int rows = m_matrixData.size();
     int cols = m_matrixData[0].size();
 
