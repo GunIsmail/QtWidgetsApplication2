@@ -15,9 +15,9 @@ public:
         FindPath::Cell goal,
         Visualization* viz,
         double speed,
-        EnemyManager* enemies) = 0;
-    //arac adi donecke fonksýyona "kara " , "deniz","hava"    
-    virtual QString name() const = 0;
+        EnemyManager* enemies) = 0; // virtual fonksiyon yaptýk. 
+   
+    virtual QString name() const = 0; //arac adi donecke fonksýyona "kara " , "deniz","hava"    
     virtual bool stepMove(const FindPath::Grid& grid,
         EnemyManager* enemies,
         QTableWidget* table) {

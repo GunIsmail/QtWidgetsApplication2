@@ -19,6 +19,7 @@ namespace FindPath {
         bool operator<(const Cell& other) const {
             if (r != other.r) return r < other.r;
             return c < other.c;
+            double elapsedTime = 0.0;
         }
     };
 
@@ -26,6 +27,7 @@ namespace FindPath {
         std::vector<Cell> nodes;
         std::vector<Cell> mines;  // mayınlı hücreler
         double distance = 0.0;
+        double elapsedTime = 0.0;
     };
 
     using Grid = std::vector<std::vector<int>>;

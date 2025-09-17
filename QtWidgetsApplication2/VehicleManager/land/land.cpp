@@ -61,7 +61,7 @@ bool LandVehicle::passableForLand(const FindPath::Grid& grid,
     return true;
 }
 
-// 🔹 Tek adım ilerleme (game loop için)
+//  Tek adım ilerleme game loop için
 bool LandVehicle::stepMove(const FindPath::Grid& grid,
     EnemyManager* enemies,
     QTableWidget* table)
@@ -70,7 +70,7 @@ bool LandVehicle::stepMove(const FindPath::Grid& grid,
         enemies->updateSnapshot((int)grid.size(), (int)grid[0].size());
     }
 
-    // Eğer yol yoksa veya bitti ise → yeniden bul
+    // Eğer yol yoksa veya bittiyse  yeniden bul
     if (m_path.empty() || m_stepIndex >= m_path.size()) {
         if (m_goal.r < 0 || m_goal.c < 0) return false; // hedef yok
         m_path = runAStar(grid, m_currentPos, m_goal, enemies);
@@ -182,12 +182,11 @@ FindPath::PathResult LandVehicle::findPath(
     if (grid.empty()) return result;
 
     m_currentPos = start;
-    m_goal = goal; // game loop için de saklıyoruz
+    m_goal = goal;
     result.nodes.push_back(start);
 
     int stepDelay = (int)(1000.0 / speed);
 
-    // ilk yol
     std::vector<Cell> path = runAStar(grid, start, goal, enemies);
     if (path.empty()) {
         return result;
@@ -219,7 +218,6 @@ FindPath::PathResult LandVehicle::findPath(
         if (viz) {
             if (auto table = viz->table()) {
                 if (auto* item = table->item(cur.r, cur.c)) {
-                    qDebug() << "cur.r:" << cur.r << " cur.c:" << cur.c;
                     item->setBackground(QColor(0, 255, 0));
                     item->setIcon(VisualizationConfig::landIcon());
                 }
@@ -230,6 +228,9 @@ FindPath::PathResult LandVehicle::findPath(
         QThread::msleep(stepDelay);
         idx++;
     }
+
+    result.distance = (int)result.nodes.size() - 1;   // başlangıcı hariç adım sayısı
+    result.elapsedTime = result.distance / speed;     // saniye
 
     return result;
 }

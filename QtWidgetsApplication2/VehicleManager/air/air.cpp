@@ -66,6 +66,7 @@ FindPath::PathResult AirVehicle::findPath(
     double dx = static_cast<double>(goal.r - start.r);
     double dy = static_cast<double>(goal.c - start.c);
     result.distance = std::sqrt(dx * dx + dy * dy);
+    result.elapsedTime = result.distance / speed;
 
     return result;
 }

@@ -368,8 +368,6 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         }
     }
 }
-
-
 void QtWidgetsApplication2::saveMatrix()
 {
     QString filePathToSave = m_currentFilePath;
@@ -708,7 +706,7 @@ void QtWidgetsApplication2::printAndVisualizeResult(const QString& vehicleName, 
             QString("%1 araci tamamladi!\n\nAdim: %2\nSüre: %3 saniye")
             .arg(vehicleName)
             .arg(res.distance)
-            .arg(timeInSeconds, 0, 'f', 2));
+            .arg(res.elapsedTime, 0, 'f', 2));
 
      
         QString path;
@@ -844,11 +842,19 @@ void QtWidgetsApplication2::addEnemies()
         int c = rand() % cols;
         if (m_matrixData[r][c] == 0 && !m_enemyManager->isOccupied(r, c)) {
             m_enemyManager->addEnemy({ r, c });
+
+            // tabloya ikon koy
+            if (matrixTable) {
+                if (auto* item = matrixTable->item(r, c)) {
+                    item->setIcon(VisualizationConfig::enemyIcon());
+                    item->setText("");
+                }
+            }
+
             placed++;
         }
     }
 
-    
     if (!m_enemyThread) {
         Visualization* viz = new Visualization(matrixTable);
         m_enemyThread = new EnemyThread(m_enemyManager, viz, Speed::enemy);
@@ -872,25 +878,46 @@ QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
     if (!v) return "?";
     return v->name();
 } 
-// mainwindow veya QtWidgetsApplication2.cpp içinde
 
+
+// haritanın global ticck 
 void QtWidgetsApplication2::startGameLoop()
 {
     QTimer* timer = new QTimer(this);
 
-    connect(timer, &QTimer::timeout, this, [=]() {
-        if (m_enemyManager) {
-            // düşmanları oynat
-            m_enemyManager->stepAll();
-            m_enemyManager->updateSnapshot(matrixTable->rowCount(),
-                matrixTable->columnCount());
-        }
+    connect(timer, &QTimer::timeout, this, [=]()
+        {
+            if (m_enemyManager) {
+                // düşmanları oynat
+                m_enemyManager->stepAll();
+                m_enemyManager->updateSnapshot(matrixTable->rowCount(),
+                    matrixTable->columnCount());
 
-        if (m_currentVehicle) {
-            // aracı bir kare ilerlet
-            m_currentVehicle->stepMove(m_matrixData, m_enemyManager, matrixTable);
-        }
+                // tabloyu düşmanlara göre güncelle
+                for (int r = 0; r < matrixTable->rowCount(); r++) {
+                    for (int c = 0; c < matrixTable->columnCount(); c++) {
+                        if (auto* item = matrixTable->item(r, c)) {
+                            if (m_enemyManager->isOccupied(r, c)) {
+                                // düşman varsa sadece ikon çiz
+                                item->setIcon(VisualizationConfig::enemyIcon());
+                                item->setText("");
+                            }
+                            else {
+                             
+                                if (m_matrixData[r][c] == 0) {
+                                    item->setIcon(QIcon());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (m_currentVehicle) {
+                m_currentVehicle->stepMove(m_matrixData, m_enemyManager, matrixTable);
+            }
         });
 
-    timer->start(100); // her 100ms'de bir çalışır
+    timer->start(Speed::refreshSpeed);  // definitionstan verileri çek kac ms de guncellenmesı gerekıyorsa 
+
 }

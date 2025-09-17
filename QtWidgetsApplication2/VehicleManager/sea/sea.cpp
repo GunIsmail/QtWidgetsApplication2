@@ -111,6 +111,7 @@ FindPath::PathResult SeaVehicle::findPath(
 
     out.nodes = path;
     out.distance = static_cast<int>(path.size()) - 1; //  adim sayisi o ana kadar ne kadar oldugu. 
+    out.elapsedTime = out.distance / speed;
 
     // mayýn listesini setten al 
     for (auto& m : mineSet) {
