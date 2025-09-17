@@ -5,15 +5,15 @@
 #include <QIcon>
 // Araç hýzlarý statik nesne baslatmak ýstemedým cagirirken 
 struct Speed {
-    static constexpr double land = 3.0;
+    static constexpr double land = 1.0;
     static constexpr double sea = 1.0;
     static constexpr double air = 5.0;
-    static constexpr double enemy = 1.0;
+    static constexpr double enemy = 0.0;
 };
 
 // Görselleþtirme ayarlarý
 namespace VisualizationConfig {
-    constexpr int STEP_DELAY_MS = 500;   // animasyon gecikmesi (ms)
+    constexpr int STEP_DELAY_MS = 1000;   // animasyon gecikmesi (ms)
     constexpr int CELL_SIZE = 50;  // cell boyutu 
     // Renkler
     const QColor LAND_COLOR = QColor(0, 128, 0);   // yeþil

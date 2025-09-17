@@ -8,7 +8,10 @@ void ThreadManager::runVehicle(Vehicle* vehicle,
     const FindPath::Grid& grid,
     FindPath::Cell start,
     FindPath::Cell goal,
-    QTableWidget* table,double speed)
+    QTableWidget* table,
+    double speed,
+    EnemyManager* enemies)  
+
 {
     QtConcurrent::run([=]() {
         Visualization viz(table);
@@ -18,7 +21,7 @@ void ThreadManager::runVehicle(Vehicle* vehicle,
         else if (vehicle->name() == "Deniz") speed = Speed::sea;
         else if (vehicle->name() == "Hava") speed = Speed::air;
 
-        auto res = vehicle->findPath(grid, start, goal, &viz, speed);
+        auto res = vehicle->findPath(grid, start, goal, &viz, speed,enemies);
         emit vehicleFinished(vehicle->name(), res);
         });
 }

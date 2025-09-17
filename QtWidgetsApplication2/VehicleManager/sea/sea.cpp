@@ -9,7 +9,8 @@ FindPath::PathResult SeaVehicle::findPath(
     FindPath::Cell start,
     FindPath::Cell goal,
     Visualization* viz,
-    double speed)
+    double speed,
+    EnemyManager*)
 
 {   
     FindPath::PathResult out;

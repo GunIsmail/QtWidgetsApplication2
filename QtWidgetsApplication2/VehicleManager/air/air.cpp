@@ -12,7 +12,8 @@ FindPath::PathResult AirVehicle::findPath(
     FindPath::Cell start,
     FindPath::Cell goal,
     Visualization* viz,
-    double speed)
+    double speed,
+    EnemyManager*)
 {
     FindPath::PathResult result;
 

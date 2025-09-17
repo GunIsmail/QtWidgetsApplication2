@@ -33,7 +33,7 @@ public:
         FindPath::Cell start,
         FindPath::Cell goal,
         QTableWidget* table,
-        double speed);
+        double speed, EnemyManager* enemies);
 
 signals:
     void vehicleFinished(QString vehicleName, FindPath::PathResult result);

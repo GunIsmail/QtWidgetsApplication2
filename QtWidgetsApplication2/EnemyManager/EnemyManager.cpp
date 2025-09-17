@@ -1,73 +1,120 @@
-#include "EnemyManager.h"
+ï»¿#include "EnemyManager.h"
 #include <cstdlib>
 #include <ctime>
-#include <algorithm>
+#include <map>
+#include <set>
+#include <QDateTime>
 
-static bool passableForLand(const FindPath::Grid& grid, int r, int c) {
+// sabit engel kontrolÃ¼ (sadece kara hÃ¼cre geÃ§ilebilir)
+static bool passableForLand(const FindPath::Grid& grid,
+    const EnemyManager* enemies,
+    int r, int c) {
     if (!FindPath::inBounds(r, c, (int)grid.size(), (int)grid[0].size()))
         return false;
-    return grid[r][c] == 0; // sadece kara hücre geçerli
+    if (grid[r][c] != 0) return false;
+
+    if (enemies) {
+        const auto& em = enemies->currentEnemyMatrix();
+        if (r >= 0 && r < (int)em.size() &&
+            c >= 0 && c < (int)em[0].size()) {
+            if (em[r][c] == 1) return false; // dÃ¼ÅŸman snapshot kontrolÃ¼
+        }
+    }
+    return true;
 }
 
 EnemyManager::EnemyManager(const FindPath::Grid& grid)
     : m_grid(grid)
 {
-    std::srand((unsigned)std::time(nullptr)); 
-
-}
-const FindPath::Grid& EnemyManager::grid() const {
-    return m_grid;
+    std::srand(std::time(nullptr));
 }
 
+void EnemyManager::addEnemy(const FindPath::Cell& start, double speed) {
+    EnemyUnit e{ start, speed, QDateTime::currentMSecsSinceEpoch() };
 
-void EnemyManager::addEnemy(const FindPath::Cell& start) {
-    m_enemies.push_back({ start }); 
+    m_enemies.push_back(e);
+    qDebug() << "Yeni dÃ¼ÅŸman eklendi -> grid:" << start.r << "," << start.c;
+
 }
-// cagirdiginde tum dusman birimleri hareket etmeye baslatir . 
+
 void EnemyManager::stepAll() {
     const int dr[4] = { -1, 1, 0, 0 };
     const int dc[4] = { 0, 0, -1, 1 };
 
-    // önce mevcut pozisyonlarý iþaretle
-    std::set<std::pair<int, int>> occupied;
-    for (auto& e : m_enemies) {
-        occupied.insert({ e.pos.r, e.pos.c });
-    }
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    std::map<FindPath::Cell, FindPath::Cell> nextTargets;
+    std::set<FindPath::Cell> occupied;
 
-    // her düþmaný sýrayla hareket ettir
     for (auto& e : m_enemies) {
+        double interval = 1000.0 / e.speed; // ms per step
+        if (now - e.lastMoveTime < interval)
+            continue; // zamanÄ± gelmedi
+
         std::vector<FindPath::Cell> neighbors;
-
         for (int k = 0; k < 4; k++) {
             int nr = e.pos.r + dr[k];
             int nc = e.pos.c + dc[k];
-            if (passableForLand(m_grid, nr, nc) &&
-                !occupied.count({ nr, nc })) {
-                neighbors.push_back({ nr, nc });
+            FindPath::Cell neigh{ nr, nc };
+
+            if (passableForLand(m_grid, this, nr, nc) &&
+                occupied.find(neigh) == occupied.end() &&
+                !isOccupied(nr, nc)) {
+                neighbors.push_back(neigh);
             }
         }
 
         if (!neighbors.empty()) {
-            // rastgele bir komþu seç
             auto next = neighbors[std::rand() % neighbors.size()];
+            nextTargets[e.pos] = next;
+            occupied.insert(next);
+        }
+        else {
+            nextTargets[e.pos] = e.pos; // hareket edemedi
+        }
 
-            // occupied güncelle
-            occupied.erase({ e.pos.r, e.pos.c });
-            e.pos = next;
-            occupied.insert({ e.pos.r, e.pos.c });
+        e.lastMoveTime = now;
+    }
+
+    for (auto& e : m_enemies) {
+        if (nextTargets.count(e.pos)) {
+            e.pos = nextTargets[e.pos];
         }
     }
 }
 
-const std::vector<EnemyUnit>& EnemyManager::enemies() const { // dusman vectoru doner 
+void EnemyManager::updateSnapshot(int R, int C) {
+    // her 50 msâ€™de bir Ã§aÄŸrÄ±lacak â†’ snapshot gÃ¼ncellenir
+    m_enemySnapshot.assign(R, std::vector<int>(C, 0));
+
+    for (auto& e : m_enemies) {
+        if (e.pos.r >= 0 && e.pos.r < R &&
+            e.pos.c >= 0 && e.pos.c < C) {
+            m_enemySnapshot[e.pos.r][e.pos.c] = 1;
+        }
+    }
+}
+
+const std::vector<EnemyUnit>& EnemyManager::enemies() const {
     return m_enemies;
 }
 
-// o gridde dusman var mý yok mu kontreol eder indexe gore 0 based ; 
 bool EnemyManager::isOccupied(int r, int c) const {
     for (auto& e : m_enemies) {
         if (e.pos.r == r && e.pos.c == c)
             return true;
     }
     return false;
+}
+
+const FindPath::Grid& EnemyManager::grid() const {
+    return m_grid;
+}
+
+FindPath::Grid EnemyManager::getEnemyMatrix(int R, int C) const {
+    FindPath::Grid m(R, std::vector<int>(C, 0));
+    for (auto& e : m_enemies) {
+        if (e.pos.r >= 0 && e.pos.r < R && e.pos.c >= 0 && e.pos.c < C)
+            m[e.pos.r][e.pos.c] = 1;
+    }
+    return m;
 }

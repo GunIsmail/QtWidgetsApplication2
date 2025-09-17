@@ -5,8 +5,9 @@
 #include <cmath>
 #include <QString>
 
-class Visualization;  // ileri bildirim
-class Vehicle;        // abstract vehicle sınıfı
+class Visualization;   // forward declaratipn 
+class Vehicle;         // abstract vehicle sınıfı
+class EnemyManager;    //  düşmanları desteklemek için ileri bildirim
 
 namespace FindPath {
 
@@ -14,6 +15,10 @@ namespace FindPath {
         int r, c;
         bool operator==(const Cell& other) const {
             return r == other.r && c == other.c;
+        }
+        bool operator<(const Cell& other) const {
+            if (r != other.r) return r < other.r;
+            return c < other.c;
         }
     };
 
@@ -29,13 +34,14 @@ namespace FindPath {
     bool inBounds(int r, int c, int R, int C);
     int manhattan(Cell a, Cell b);
 
-    // Polimorfizm saglayan yapi
+    // Polimorfizm saglayan yapı
     PathResult findPathWithVehicle(
         Vehicle* vehicle,
         const Grid& grid,
         Cell start,
         Cell goal,
-        Visualization* viz
+        Visualization* viz,
+        EnemyManager* enemies   // 🔹 buraya eklendi
     );
 }
 

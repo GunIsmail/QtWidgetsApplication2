@@ -8,7 +8,8 @@ public:
         FindPath::Cell start,
         FindPath::Cell goal,
         Visualization* viz,
-        double speed) override;
+        double speed,
+        EnemyManager*) override;
 
     QString name() const override { return "Deniz"; }
 };

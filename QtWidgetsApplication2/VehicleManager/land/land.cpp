@@ -1,5 +1,4 @@
 ﻿#include "land.h"
-#include "definitions.h"
 #include <queue>
 #include <map>
 #include <set>
@@ -8,178 +7,228 @@
 #include <QThread>
 #include <QCoreApplication>
 #include <QDebug>
-
-//Kara aracı dinamik düşman konumlarını dikkate alarak güvenli ve en kısa yolu bulur. 
-// Algoritma: D* Lite / LPA* mantığıyla hedef düğümden başlayarak maliyet değerlerini (g ve rhs) hesaplar, başlangıçtan hedefe doğru en kısa yol seçilir.
+#include <QColor>
 
 
+//// @ Her adımda A* çalışmıyor.
+//
+//Araç normalde önceden bulduğu yolu kullanıyor.
+// Dinamik A* 
+
+
+
+// Komşu hareket yönleri
 static const int dr[4] = { -1, 1, 0, 0 };
 static const int dc[4] = { 0, 0, -1, 1 };
 
-// Hücre geçilebilir mi (kara + düşman kontrolü)
-static bool passableForLand(const FindPath::Grid& grid, const EnemyManager* enemies, int r, int c) {
-	int safeRadius = 1; // düşman etrafında güvenlik alanı
+using Cell = FindPath::Cell;
+
+LandVehicle::LandVehicle() {
+    m_currentPos = { 0, 0 };
+    m_stepIndex = 0;
+    m_path.clear();
+    m_goal = { -1, -1 };
+}
+
+// Hücre kara + düşman snapshot kontrolü
+bool LandVehicle::passableForLand(const FindPath::Grid& grid,
+    const EnemyManager* enemies,
+    int r, int c)
+{
+    int safeRadius = 1;
     if (!FindPath::inBounds(r, c, (int)grid.size(), (int)grid[0].size()))
         return false;
-    if (grid[r][c] != 0) return false;       // 0 = kara
+    if (grid[r][c] != 0)
+        return false;
 
     if (enemies) {
-        // Düşman etrafında güvenlik alanı kontrolü
-        for (int dr = -safeRadius; dr <= safeRadius; dr++) {
-            for (int dc = -safeRadius; dc <= safeRadius; dc++) {
-                int nr = r + dr;
-                int nc = c + dc;
-                if (FindPath::inBounds(nr, nc, (int)grid.size(), (int)grid[0].size())) {
-                    if (enemies->isOccupied(nr, nc)) {
-                        return false; // güvenlik alanına girme
+        const auto& em = enemies->currentEnemyMatrix();
+        if (r >= 0 && r < (int)em.size() &&
+            c >= 0 && c < (int)em[0].size()) {
+            if (em[r][c] == 1) return false;
+
+            // güvenlik yarıçapı
+            for (int rr = -safeRadius; rr <= safeRadius; rr++) {
+                for (int cc = -safeRadius; cc <= safeRadius; cc++) {
+                    int nr = r + rr, nc = c + cc;
+                    if (FindPath::inBounds(nr, nc, (int)em.size(), (int)em[0].size())) {
+                        if (em[nr][nc] == 1) return false;
                     }
                 }
             }
+        }
+    }
+    return true;
+}
+
+// 🔹 Tek adım ilerleme (game loop için)
+bool LandVehicle::stepMove(const FindPath::Grid& grid,
+    EnemyManager* enemies,
+    QTableWidget* table)
+{
+    if (enemies) {
+        enemies->updateSnapshot((int)grid.size(), (int)grid[0].size());
+    }
+
+    // Eğer yol yoksa veya bitti ise → yeniden bul
+    if (m_path.empty() || m_stepIndex >= m_path.size()) {
+        if (m_goal.r < 0 || m_goal.c < 0) return false; // hedef yok
+        m_path = runAStar(grid, m_currentPos, m_goal, enemies);
+        m_stepIndex = 0;
+        if (m_path.empty()) return false;
+    }
+
+    Cell next = m_path[m_stepIndex];
+
+    // düşman yüzünden geçilemiyorsa → tekrar planla
+    if (!passableForLand(grid, enemies, next.r, next.c)) {
+        m_path = runAStar(grid, m_currentPos, m_goal, enemies);
+        m_stepIndex = 0;
+        if (m_path.empty()) return false;
+        next = m_path[m_stepIndex];
+    }
+
+    // adımı uygula
+    m_currentPos = next;
+    m_stepIndex++;
+
+    // tabloyu boyama
+    if (table) {
+        if (auto* item = table->item(next.r, next.c)) {
+            item->setBackground(QColor(0, 255, 0));
+            item->setIcon(VisualizationConfig::landIcon());
         }
     }
 
     return true;
 }
 
-
-
-FindPath::PathResult LandVehicle::findPath(
+// A* algoritması
+std::vector<Cell> LandVehicle::runAStar(
     const FindPath::Grid& grid,
-    FindPath::Cell start,
-    FindPath::Cell goal,
-    Visualization* viz,
-    double speed)
+    Cell start,
+    Cell goal,
+    const EnemyManager* enemies)
 {
-    FindPath::PathResult result;
-
-    int R = grid.size();
-    if (R == 0) return result;
-    int C = grid[0].size();
-
-    // g ve rhs tabloları
-    std::map<std::pair<int, int>, double> g, rhs;
-    auto key = [&](int r, int c) { return std::make_pair(r, c); };
-
-    for (int r = 0; r < R; r++) {
-        for (int c = 0; c < C; c++) {
-            g[key(r, c)] = std::numeric_limits<double>::infinity();
-            rhs[key(r, c)] = std::numeric_limits<double>::infinity();
-        }
-    }
-
-    rhs[key(goal.r, goal.c)] = 0.0;
-
-    // öncelik kuyruğu
-    struct NodeCompare {
-        bool operator()(const std::pair<double, std::pair<int, int>>& a,
-            const std::pair<double, std::pair<int, int>>& b) const {
-            if (a.first == b.first)
-                return a.second < b.second;
-            return a.first > b.first; // küçük öncelikli
+    struct Node {
+        int r, c;
+        double g, f;
+        bool operator<(const Node& other) const {
+            return f > other.f; // küçük olan önce gelsin
         }
     };
 
-    std::priority_queue<
-        std::pair<double, std::pair<int, int>>,
-        std::vector<std::pair<double, std::pair<int, int>>>,
-        NodeCompare
-    > pq;
+    std::priority_queue<Node, std::vector<Node>, std::less<Node>> open;
+    std::map<Cell, double> g;
+    std::map<Cell, Cell> parent;
 
-    pq.push({ 0.0, key(goal.r, goal.c) });
+    for (int r = 0; r < (int)grid.size(); r++) {
+        for (int c = 0; c < (int)grid[0].size(); c++) {
+            g[{r, c}] = std::numeric_limits<double>::infinity();
+        }
+    }
 
-    // D* Lite benzeri işlem
-    while (!pq.empty()) {
-        auto current = pq.top();
-        pq.pop();
-        int r = current.second.first;
-        int c = current.second.second;
+    g[start] = 0.0;
+    open.push({ start.r, start.c, 0.0, (double)FindPath::manhattan(start, goal) });
 
-        double old_g = g[key(r, c)];
-        double new_g = rhs[key(r, c)];
-        if (old_g != new_g) {
-            g[key(r, c)] = new_g;
-            for (int k = 0; k < 4; k++) {
-                int nr = r + dr[k], nc = c + dc[k];
-                if (passableForLand(grid, enemyManager, nr, nc)) {
-                    double cost = 1.0;
-                    double val = g[key(r, c)] + cost;
-                    if (val < rhs[key(nr, nc)]) {
-                        rhs[key(nr, nc)] = val;
-                        pq.push({ val + std::hypot(goal.r - nr, goal.c - nc), key(nr, nc) });
-                    }
-                }
+    while (!open.empty()) {
+        Node cur = open.top();
+        open.pop();
+
+        Cell u{ cur.r, cur.c };
+        if (u == goal) break;
+
+        for (int k = 0; k < 4; k++) {
+            int nr = cur.r + dr[k];
+            int nc = cur.c + dc[k];
+            if (!passableForLand(grid, enemies, nr, nc)) continue;
+
+            Cell v{ nr, nc };
+            double newG = g[u] + 1.0;
+            if (newG < g[v]) {
+                g[v] = newG;
+                parent[v] = u;
+                double h = (double)FindPath::manhattan(v, goal);
+                open.push({ nr, nc, newG, newG + h });
             }
         }
     }
 
-   
-    FindPath::Cell cur = start;
-    result.nodes.push_back(cur);
+    // Yol çıkarma
+    std::vector<Cell> path;
+    if (g[goal] == std::numeric_limits<double>::infinity())
+        return path;
 
-    while (!(cur.r == goal.r && cur.c == goal.c)) {
-        double best = std::numeric_limits<double>::infinity();
-        FindPath::Cell next = cur;
-        for (int k = 0; k < 4; k++) {
-            int nr = cur.r + dr[k], nc = cur.c + dc[k];
-            if (passableForLand(grid, enemyManager, nr, nc)) {
-                if (g[key(nr, nc)] < best) {
-                    best = g[key(nr, nc)];
-                    next = { nr, nc };
-                }
-            }
+    Cell cur = goal;
+    while (!(cur == start)) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    path.push_back(start);
+    std::reverse(path.begin(), path.end());
+    return path;
+}
+
+// Klasik findPath (tam yolu çalıştırır ve boyar)
+FindPath::PathResult LandVehicle::findPath(
+    const FindPath::Grid& grid,
+    Cell start,
+    Cell goal,
+    Visualization* viz,
+    double speed,
+    EnemyManager* enemies)
+{
+    FindPath::PathResult result;
+    if (grid.empty()) return result;
+
+    m_currentPos = start;
+    m_goal = goal; // game loop için de saklıyoruz
+    result.nodes.push_back(start);
+
+    int stepDelay = (int)(1000.0 / speed);
+
+    // ilk yol
+    std::vector<Cell> path = runAStar(grid, start, goal, enemies);
+    if (path.empty()) {
+        return result;
+    }
+
+    Cell cur = start;
+    int idx = 1;
+
+    while (!(cur == goal)) {
+        if (idx >= (int)path.size()) break;
+        Cell next = path[idx];
+
+        if (enemies) {
+            enemies->updateSnapshot((int)grid.size(), (int)grid[0].size());
         }
-        if (next.r == cur.r && next.c == cur.c) {
-            qDebug() << "Yol bulunamadi";
-            break;
+
+        if (!passableForLand(grid, enemies, next.r, next.c)) {
+            qDebug() << "Yol kapandı, yeniden planlama!";
+            path = runAStar(grid, cur, goal, enemies);
+            if (path.empty()) break;
+            idx = 1;
+            continue;
         }
-
-        result.nodes.push_back(next);
-
-      
-        if (viz) {
-            auto table = viz->table();
-            if (table) {
-                // önceki hücreyi temizle
-                QTableWidgetItem* prevItem = table->item(cur.r, cur.c);
-                if (prevItem) {
-                    prevItem->setIcon(QIcon());
-                    prevItem->setBackground(VisualizationConfig::LAND_COLOR);
-                }
-
-                // yeni hücreye tank koy
-                QTableWidgetItem* item = table->item(next.r, next.c);
-                if (item) {
-                    item->setIcon(VisualizationConfig::landIcon());
-                }
-                //  Düşman ile güvenlik alanı çakışma kontrolü
-                if (enemyManager) {
-                    int safeRadius = 1; //guvenlık yaricapi 
-
-                    for (int dr = -safeRadius; dr <= safeRadius; dr++) {
-                        for (int dc = -safeRadius; dc <= safeRadius; dc++) {
-                            int nr = next.r + dr;
-                            int nc = next.c + dc;
-
-                            if (FindPath::inBounds(nr, nc, (int)grid.size(), (int)grid[0].size())) {
-                                if (enemyManager->isOccupied(nr, nc)) {
-                                    QMessageBox::critical(nullptr, "Uyarı",
-                                        QString("Kara aracı düşman güvenlik alanına girdi! (%1,%2)")
-                                        .arg(next.r).arg(next.c));
-                                    return result;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                QCoreApplication::processEvents();
-				// Hız ayarı definitionstan alinir. 
-                QThread::msleep( int(VisualizationConfig::STEP_DELAY_MS / Speed::land));
-            }
-        }
-        
 
         cur = next;
+        m_currentPos = cur;
+        result.nodes.push_back(cur);
+
+        if (viz) {
+            if (auto table = viz->table()) {
+                if (auto* item = table->item(cur.r, cur.c)) {
+                    qDebug() << "cur.r:" << cur.r << " cur.c:" << cur.c;
+                    item->setBackground(QColor(0, 255, 0));
+                    item->setIcon(VisualizationConfig::landIcon());
+                }
+                QCoreApplication::processEvents();
+            }
+        }
+
+        QThread::msleep(stepDelay);
+        idx++;
     }
 
     return result;

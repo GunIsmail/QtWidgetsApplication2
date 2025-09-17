@@ -1,6 +1,7 @@
 #include "findpath.h"
 #include "vehicle/vehicle.h"
 #include "definitions.h"
+#include "EnemyManager/EnemyManager.h"
 
 bool FindPath::inBounds(int r, int c, int R, int C) {
     return r >= 0 && r < R && c >= 0 && c < C;
@@ -15,12 +16,13 @@ FindPath::PathResult FindPath::findPathWithVehicle(
     const Grid& grid,
     Cell start,
     Cell goal,
-    Visualization* viz)
+    Visualization* viz,
+    EnemyManager* enemies)   // parametre burada da var
 {
     if (!vehicle) return {};
 
     // hýz tanýmlarý definitions.h içinden alýnýr
-    double speed=0 ;
+    double speed = 0;
     if (vehicle->name() == "Kara") {
         speed = Speed::land;
     }
@@ -31,5 +33,6 @@ FindPath::PathResult FindPath::findPathWithVehicle(
         speed = Speed::air;
     }
 
-    return vehicle->findPath(grid, start, goal, viz, speed);
+    //  Bütün araçlar ayný imzayý kullanýr, ama Sea/Air düþman parametresini ignore eder
+    return vehicle->findPath(grid, start, goal, viz, speed, enemies);
 }

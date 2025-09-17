@@ -66,7 +66,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile />
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\definitions;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\visualizationManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\ThreadManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManagee;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\VehicleManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\VehicleSelectionDialogManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\definitions;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\visualizationManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\ThreadManager;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\MapManagee;C:\Users\cheng\source\repos\qtApp\QtWidgetsApplication2\QtWidgetsApplication2\VehicleManager;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -98,13 +98,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="definitions\definitions.cpp" />
     <ClCompile Include="EnemyManager\EnemyManager.cpp" />
     <ClCompile Include="VehicleManager\enemies\Enemy.cpp" />
     <ClCompile Include="ThreadManager\threadManager.cpp" />
     <ClCompile Include="VehicleManager\vehicle\vehicle.cpp" />
+    <ClCompile Include="VehicleSelectionDialogManager\VehicleSelectionDialog.cpp" />
     <ClCompile Include="visualizationManager\visualization.cpp" />
-    <ClCompile Include="VehicleSelectionDialog.cpp" />
     <QtRcc Include="QtWidgetsApplication2.qrc" />
     <QtRcc Include="resources.qrc" />
     <QtUic Include="QtWidgetsApplication2.ui" />
@@ -124,13 +123,13 @@
     <ClInclude Include="EnemyManager\EnemyManager.h" />
     <ClInclude Include="VehicleManager\enemies\Enemy.h" />
     <ClInclude Include="VehicleManager\vehicle\vehicle.h" />
+    <QtMoc Include="VehicleSelectionDialogManager\VehicleSelectionDialog.h" />
     <ClInclude Include="visualizationManager\visualization.h" />
     <ClInclude Include="VehicleManager\sea\sea.h" />
     <ClInclude Include="VehicleManager\land\land.h" />
     <ClInclude Include="VehicleManager\air\air.h" />
     <ClInclude Include="definitions.h" />
     <ClInclude Include="VehicleManager\FindPath.h" />
-    <QtMoc Include="VehicleSelectionDialog.h" />
     <QtMoc Include="FindAlgorithmWindow.h" />
     <QtMoc Include="MapManagee\QtWidgetsApplication2.h" />
   </ItemGroup>

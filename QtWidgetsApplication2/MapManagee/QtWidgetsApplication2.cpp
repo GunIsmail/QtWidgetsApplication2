@@ -1,10 +1,11 @@
 ﻿#include "QtWidgetsApplication2.h"
 
+
 //constructor 
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
 {
-    // Arayuz bilesenlerini olusturma
+    // Arayüz bileşenlerini oluşturma
     nLabel = new QLabel("Satir  (N):", this);
     mLabel = new QLabel("Sutun  (M):", this);
     nLineEdit = new QLineEdit(this);
@@ -14,7 +15,9 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     addObstacleButton = new QPushButton("Engel Ekle", this);
     addSeaButton = new QPushButton("Deniz Ekle", this);
     addMineButton = new QPushButton("Mayin Ekle", this);
-    addEnemyButton = new QPushButton("Düsman Ekle", this);
+
+    addEnemyButton = new QPushButton("Elle Düşman Ekle", this);       // Elle ekleme
+    addRandomEnemyButton = new QPushButton("Rastgele Düşman Ekle", this); // Rastgele ekleme
 
     saveButton = new QPushButton("Kaydet", this);
     matrixTable = new QTableWidget(this);
@@ -29,14 +32,14 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     infoLabel = new QLabel("Arac ekleyin.", this);
     skipButton = new QPushButton("Atla", this);
 
-    // Arac ekleme mekanizmasi
+    // Arac ekleme mekanizması
     addVehicleButton = new QPushButton("Arac Ekle", this);
     vehicleComboBox = new QComboBox(this);
     vehicleComboBox->addItem("Kara");
     vehicleComboBox->addItem("Deniz");
     vehicleComboBox->addItem("Hava");
 
-    // Baslangic durumu ve buton ayarlari
+    // Başlangıç durumu ve buton ayarları
     currentState = AppState::None;
     addObstacleButton->setCheckable(true);
     addSeaButton->setCheckable(true);
@@ -58,8 +61,6 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     inputLayout->addWidget(mLineEdit);
     inputLayout->addWidget(createButton);
     inputLayout->addWidget(loadButton);
-    
-
 
     QHBoxLayout* actionButtonLayout = new QHBoxLayout();
     actionButtonLayout->addWidget(addObstacleButton);
@@ -67,13 +68,12 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     actionButtonLayout->addWidget(addMineButton);
     actionButtonLayout->addWidget(saveButton);
     actionButtonLayout->addWidget(findAlgorithmButton);
-    
-
 
     QHBoxLayout* vehicleLayout = new QHBoxLayout();
     vehicleLayout->addWidget(vehicleComboBox);
     vehicleLayout->addWidget(addVehicleButton);
-    vehicleLayout->addWidget(addEnemyButton);
+    vehicleLayout->addWidget(addEnemyButton);        // Elle ekleme butonu
+    vehicleLayout->addWidget(addRandomEnemyButton);  // Rastgele ekleme butonu
 
     QHBoxLayout* algorithmButtonsLayout = new QHBoxLayout();
     algorithmButtonsLayout->addWidget(setStartButton);
@@ -91,21 +91,17 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(inputLayout);
 
-    // tabloya büyüme hakki ver
     matrixTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    // tabloya daha fazla stretch ver (orneğin 5)
-    mainLayout->addWidget(matrixTable, /*stretch*/ 5);
-
-    // buton layoutlari daha az yer kaplasin (orneğin 1)
+    mainLayout->addWidget(matrixTable, 5); // tabloya daha fazla yer
     mainLayout->addLayout(actionButtonLayout, 1);
     mainLayout->addLayout(algorithmLayout, 2);
+
     QTimer::singleShot(0, this, [this]() {
         QResizeEvent fakeEvent(this->size(), this->size());
         this->resizeEvent(&fakeEvent);
         });
 
-    // Baslangicta gizle
+    // Başlangıçta gizle
     infoLabel->hide();
     setStartButton->hide();
     setEndButton->hide();
@@ -119,12 +115,17 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     setLayout(mainLayout);
     setWindowTitle("Matrix Uygulamasi");
     showFullScreen();
-    // Sinyal-slot baglantilari
+
+    // Sinyal-slot bağlantıları
     connect(createButton, &QPushButton::clicked, this, &QtWidgetsApplication2::createMatrix);
     connect(loadButton, &QPushButton::clicked, this, &QtWidgetsApplication2::loadMatrix);
     connect(addObstacleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addObstacleClicked);
     connect(addSeaButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addSeaClicked);
     connect(addMineButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addMineClicked);
+
+    connect(addEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemyClicked);   // Elle ekleme
+    connect(addRandomEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemies); // Rastgele ekleme
+
     connect(matrixTable, &QTableWidget::cellClicked, this, &QtWidgetsApplication2::cellClicked);
     connect(saveButton, &QPushButton::clicked, this, &QtWidgetsApplication2::saveMatrix);
     connect(findAlgorithmButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findAlgorithm);
@@ -134,10 +135,9 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     connect(findPathButton, &QPushButton::clicked, this, &QtWidgetsApplication2::findPath);
     connect(resetButton, &QPushButton::clicked, this, &QtWidgetsApplication2::resetUI);
     connect(skipButton, &QPushButton::clicked, this, &QtWidgetsApplication2::skipVehicle);
-    connect(addEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemies);
-
-
     connect(addVehicleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addVehicle);
+
+
 }
 //destructor 
 QtWidgetsApplication2::~QtWidgetsApplication2()
@@ -253,7 +253,36 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     QTableWidgetItem* item = matrixTable->item(row, col);
     if (!item) return;
 
-    // --- Edit mode ---
+   // --- Düşman ekleme ---
+    if (currentState == AppState::AddingEnemy) {
+        if (m_matrixData[row][col] == 0) { // sadece kara hücresi
+            if (!m_enemyManager) {
+                m_enemyManager = new EnemyManager(m_matrixData);
+            }
+            if (!m_enemyManager->isOccupied(row, col)) {
+                m_enemyManager->addEnemy({ row, col });
+
+                // tabloya düşman ikonu koy
+                item->setIcon(VisualizationConfig::enemyIcon());
+                item->setText("");
+
+                resultsTextEdit->append(
+                    QString("Elle düşman eklendi: (%1,%2)").arg(row+1).arg(col+1));
+
+                //  Snapshot haritayı  hemen güncelle
+                m_enemyManager->updateSnapshot(matrixTable->rowCount(),
+                    matrixTable->columnCount());
+            }
+        }
+        else {
+            QMessageBox::warning(this, "Hata", "Düşman sadece kara (0) üzerinde eklenebilir!");
+        }
+        currentState = AppState::None;
+        return;
+    }
+
+
+    // --- Deniz ekleme ---
     if (currentState == AppState::AddingSea) {
         item->setText("Deniz");
         item->setBackground(VisualizationConfig::SEA_COLOR);
@@ -262,6 +291,8 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         m_matrixData[row][col] = 2;
         return;
     }
+
+    // --- Engel ekleme ---
     if (currentState == AppState::AddingObstacle) {
         item->setText("Engel");
         item->setBackground(VisualizationConfig::OBSTACLE_COLOR);
@@ -270,6 +301,8 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
         m_matrixData[row][col] = 1;
         return;
     }
+
+    // --- Mayın ekleme ---
     if (currentState == AppState::AddingMine) {
         if (m_matrixData[row][col] == 2 || m_matrixData[row][col] == 3) {
             item->setText("X");
@@ -279,40 +312,40 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
             m_matrixData[row][col] = 3;
         }
         else {
-            QMessageBox::warning(this, "Warning", "Mayini denize yerlestirin.");
+            QMessageBox::warning(this, "Warning", "Mayını denize yerleştirin.");
         }
         return;
     }
 
-    // --- Start/End selection ---
+    // --- Start / End seçimi ---
     if (currentState == AppState::SettingStart || currentState == AppState::SettingEnd) {
-        int val = m_matrixData[row][col]; // hücre tipini data’dan al
+        int val = m_matrixData[row][col]; // hücre tipi
 
-        // Kara aracı sadece kara (0) üzerinde olabilir
+        // Kara aracı sadece kara (0)
         if (dynamic_cast<LandVehicle*>(m_currentVehicle) && val != 0) {
-            QMessageBox::warning(this, "Warning", "Kara araci sadece kara parcasina konabilir.");
+            QMessageBox::warning(this, "Warning", "Kara aracı sadece kara parçasına konabilir.");
             return;
         }
-        // Deniz aracı sadece deniz (2) veya mayın (3) üzerinde olabilir
+        // Deniz aracı sadece deniz (2) veya mayın (3)
         else if (dynamic_cast<SeaVehicle*>(m_currentVehicle) && (val != 2 && val != 3)) {
-            QMessageBox::warning(this, "Warning", "Deniz araci sadece denize veya mayina konabilir.");
+            QMessageBox::warning(this, "Warning", "Deniz aracı sadece denize veya mayına konabilir.");
             return;
         }
-        // Hava aracı: engel (1) üzerine konamaz, diğer tüm zeminlere konabilir
+        // Hava aracı engelin (1) üstüne konamaz
         else if (dynamic_cast<AirVehicle*>(m_currentVehicle) && val == 1) {
-            QMessageBox::warning(this, "Warning", "Hava araci engelin üstüne konamaz.");
+            QMessageBox::warning(this, "Warning", "Hava aracı engelin üstüne konamaz.");
             return;
         }
 
         if (currentState == AppState::SettingStart) {
             m_tempStart = { row, col };
-            infoLabel->setText(QString("%1 araci: bitis noktasi sec")
+            infoLabel->setText(QString("%1 aracı: bitiş noktası seç")
                 .arg(vehicleToText(m_currentVehicle)));
             currentState = AppState::SettingEnd;
 
             // Başlangıç ikonu ekle
             item->setIcon(VisualizationConfig::startIcon());
-            item->setText(""); // sadece ikon görünsün
+            item->setText("");
         }
         else if (currentState == AppState::SettingEnd) {
             VehicleTask task;
@@ -322,7 +355,7 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
 
             m_vehicleTasks.append(task);
 
-            resultsTextEdit->append(QString("-> %1: baslangic (%2,%3), bitis (%4,%5)")
+            resultsTextEdit->append(QString("-> %1: başlangıç (%2,%3), bitiş (%4,%5)")
                 .arg(vehicleToText(m_currentVehicle))
                 .arg(task.start.r).arg(task.start.c)
                 .arg(task.end.r).arg(task.end.c));
@@ -331,10 +364,12 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
 
             // Bitiş ikonu ekle
             item->setIcon(VisualizationConfig::endIcon());
-            item->setText(""); // sadece ikon görünsün
+            item->setText("");
         }
     }
 }
+
+
 void QtWidgetsApplication2::saveMatrix()
 {
     QString filePathToSave = m_currentFilePath;
@@ -420,6 +455,12 @@ void QtWidgetsApplication2::findPath()
     int H = this->height();
     int rows = matrixTable->rowCount();
     int cols = matrixTable->columnCount();
+    if (!m_enemyManager) {
+        m_enemyManager = new EnemyManager(m_matrixData);
+    }
+    m_enemyManager->updateSnapshot(matrixTable->rowCount(),
+        matrixTable->columnCount());
+
 
     if (rows > 0 && cols > 0) {
         int cellSize = std::min(W / cols, H / rows);
@@ -476,7 +517,7 @@ void QtWidgetsApplication2::findPath()
         else if (dynamic_cast<AirVehicle*>(v)) speed = Speed::air;
 
         if (v) {
-            manager->runVehicle(v, m_matrixData, task.start, task.end, matrixTable, speed);
+            manager->runVehicle(v, m_matrixData, task.start, task.end, matrixTable, speed,m_enemyManager);
         }
     }
 }
@@ -719,6 +760,13 @@ void QtWidgetsApplication2::resetUI()
     addMineButton->show();
     saveButton->show();
     findAlgorithmButton->show();
+    
+
+    if (m_enemyManager) {
+        delete m_enemyManager;
+        m_enemyManager = nullptr;
+    }
+
 
     // 4) m_matrixData'dan tabloyu yeniden ciz
     if (!m_matrixData.empty()) {
@@ -809,7 +857,40 @@ void QtWidgetsApplication2::addEnemies()
 
     resultsTextEdit->append(QString("%1 düsman haritaya eklendi.").arg(count));
 }
+void QtWidgetsApplication2::addEnemyClicked()
+{
+    addObstacleButton->setChecked(false);
+    addSeaButton->setChecked(false);
+    addMineButton->setChecked(false);
+
+    currentState = AppState::AddingEnemy;
+    infoLabel->show();
+    infoLabel->setText("Düşman eklemek için haritadan bir hücre seçin.");
+}
+
 QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
     if (!v) return "?";
     return v->name();
+} 
+// mainwindow veya QtWidgetsApplication2.cpp içinde
+
+void QtWidgetsApplication2::startGameLoop()
+{
+    QTimer* timer = new QTimer(this);
+
+    connect(timer, &QTimer::timeout, this, [=]() {
+        if (m_enemyManager) {
+            // düşmanları oynat
+            m_enemyManager->stepAll();
+            m_enemyManager->updateSnapshot(matrixTable->rowCount(),
+                matrixTable->columnCount());
+        }
+
+        if (m_currentVehicle) {
+            // aracı bir kare ilerlet
+            m_currentVehicle->stepMove(m_matrixData, m_enemyManager, matrixTable);
+        }
+        });
+
+    timer->start(100); // her 100ms'de bir çalışır
 }

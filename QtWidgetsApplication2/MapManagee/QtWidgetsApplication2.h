@@ -26,6 +26,7 @@
 #include "ThreadManager/threadManager.h"
 #include "definitions.h"
 #include "visualization.h"
+#include "VehicleSelectionDialogManager/VehicleSelectionDialog.h"
 #include "VehicleManager/vehicle/vehicle.h"
 #include "VehicleManager/land/land.h"
 #include "VehicleManager/sea/sea.h"
@@ -36,6 +37,7 @@ enum class AppState {
     None,
     AddingSea,
     AddingObstacle,
+    AddingEnemy,
     AddingMine,
     SettingStart,
     SettingEnd
@@ -64,7 +66,9 @@ private slots:
     void resetUI();
     void skipVehicle();
     void addVehicle();
-    void addEnemies();
+    void addEnemies();       //  Rastgele düþman ekleme
+    void addEnemyClicked();  //  Elle düþman ekleme
+    void startGameLoop();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -87,8 +91,8 @@ private:
     QPushButton* findPathButton;
     QPushButton* resetButton;
     QPushButton* skipButton;
-    QPushButton* addEnemyButton;
-  
+    QPushButton* addEnemyButton;        // Elle düþman ekleme
+    QPushButton* addRandomEnemyButton;  // Rastgele düþman ekleme
 
     QLabel* nLabel;
     QLabel* mLabel;

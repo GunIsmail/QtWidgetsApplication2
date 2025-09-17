@@ -58,16 +58,10 @@
     <ClCompile Include="VehicleManager\sea\sea.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VehicleSelectionDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="visualizationManager\visualization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ThreadManager\threadManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="definitions\definitions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VehicleManager\vehicle\vehicle.cpp">
@@ -77,6 +71,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EnemyManager\EnemyManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VehicleSelectionDialogManager\VehicleSelectionDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -132,10 +129,10 @@
     <QtMoc Include="FindAlgorithmWindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="VehicleSelectionDialog.h">
+    <QtMoc Include="ThreadManager\threadManager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="ThreadManager\threadManager.h">
+    <QtMoc Include="VehicleSelectionDialogManager\VehicleSelectionDialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
