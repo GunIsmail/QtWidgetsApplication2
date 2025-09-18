@@ -1,8 +1,11 @@
-#include "sea.h"
+ï»¿#include "sea.h"
 #include <QThread>
 #include <QCoreApplication>
 #include <set>
 #include <QDebug>
+#include <cstdlib>
+#include <ctime>
+
 
 FindPath::PathResult SeaVehicle::findPath(
     const FindPath::Grid& grid,
@@ -11,18 +14,28 @@ FindPath::PathResult SeaVehicle::findPath(
     Visualization* viz,
     double speed,
     EnemyManager*)
-
-{   
+{
     FindPath::PathResult out;
     std::vector<FindPath::Cell> path;
-    std::set<std::pair<int, int>> mineSet; // mayýnlarý tekrar etmeden tutmak için
+    std::set<std::pair<int, int>> mineSet; // mayÄ±nlarÄ± tekrar etmeden tutmak iÃ§in
+
+    // === Noise matrisi ===
+    std::vector<std::vector<int>> seaNoise(grid.size(), std::vector<int>(grid[0].size(), -1));
+    std::srand((unsigned)std::time(nullptr));
+    for (int r = 0; r < (int)grid.size(); r++) {
+        for (int c = 0; c < (int)grid[0].size(); c++) {
+            if (grid[r][c] == 2 || grid[r][c] == 3) { // deniz veya mayÄ±n
+                seaNoise[r][c] = 30 + (std::rand() % 41); // 30â€“70 arasÄ±
+            }
+        }
+    }
 
     int startRow = std::min(start.r, goal.r);
     int endRow = std::max(start.r, goal.r);
     int startCol = std::min(start.c, goal.c);
     int endCol = std::max(start.c, goal.c);
 
-    // tek hücre boyama
+    // Tek hÃ¼cre boyama
     auto scanCell = [&](int r, int c, QColor color, bool putShip = false) {
         if (r < 0 || c < 0 || r >= (int)grid.size() || c >= (int)grid[0].size())
             return;
@@ -35,17 +48,29 @@ FindPath::PathResult SeaVehicle::findPath(
                 if (item) {
                     item->setBackground(color);
                     if (putShip) {
-                        item->setIcon(VisualizationConfig::seaIcon()); // gemi ikonu
+                        item->setIcon(VisualizationConfig::seaIcon());
+                    }
+                    if (seaNoise[r][c] != -1) {
+                        item->setText(QString::number(seaNoise[r][c]));
                     }
                 }
             }
         }
+
         if (grid[r][c] == 3) {
-            mineSet.insert({ r, c });
+            qDebug() << "scanCell Mayin kontrolu:" << r << c
+                << "noise=" << seaNoise[r][c];
+            if (seaNoise[r][c] <= noiseRate::seaNoiceRate) {
+                qDebug() << "   -> Mayin ALGILANDI (mineSet'e eklendi)";
+                mineSet.insert({ r, c });
+            }
+            else {
+                qDebug() << "   -> Mayin GORULMEDI (noise buyuk)";
+            }
         }
         };
 
-    // sað ve solu ayný anda boyama
+    // SaÄŸ ve solu aynÄ± anda boyama
     auto scanSides = [&](int r, int c) {
         bool painted = false;
         auto table = viz ? viz->table() : nullptr;
@@ -53,20 +78,49 @@ FindPath::PathResult SeaVehicle::findPath(
         if (r >= 0 && r < (int)grid.size() && table) {
             // sol
             if (c - 1 >= 0 && grid[r][c - 1] != 1 && grid[r][c - 1] != 0) {
+                if (grid[r][c - 1] == 3) {
+                    qDebug() << "scanSides (sol) Mayin kontrolu:" << r << c - 1
+                        << "noise=" << seaNoise[r][c - 1];
+                    if (seaNoise[r][c - 1] <= noiseRate::seaNoiceRate) {
+                        qDebug() << "   -> ALGILANDI";
+                        mineSet.insert({ r, c - 1 });
+                    }
+                    else {
+                        qDebug() << "   -> GORULMEDI";
+                    }
+                }
+
                 QTableWidgetItem* item = table->item(r, c - 1);
                 if (item) {
                     item->setBackground(VisualizationConfig::SCAN_COLOR);
+                    if (seaNoise[r][c - 1] != -1) {
+                        item->setText(QString::number(seaNoise[r][c - 1]));
+                    }
                 }
-                if (grid[r][c - 1] == 3) mineSet.insert({ r, c - 1 });
                 painted = true;
             }
-            // sað
+
+            // saÄŸ
             if (c + 1 < (int)grid[0].size() && grid[r][c + 1] != 1 && grid[r][c + 1] != 0) {
+                if (grid[r][c + 1] == 3) {
+                    qDebug() << "scanSides (sag) Mayin kontrolu:" << r << c + 1
+                        << "noise=" << seaNoise[r][c + 1];
+                    if (seaNoise[r][c + 1] <= noiseRate::seaNoiceRate) {
+                        qDebug() << "   -> ALGILANDI";
+                        mineSet.insert({ r, c + 1 });
+                    }
+                    else {
+                        qDebug() << "   -> GORULMEDI";
+                    }
+                }
+
                 QTableWidgetItem* item = table->item(r, c + 1);
                 if (item) {
                     item->setBackground(VisualizationConfig::SCAN_COLOR);
+                    if (seaNoise[r][c + 1] != -1) {
+                        item->setText(QString::number(seaNoise[r][c + 1]));
+                    }
                 }
-                if (grid[r][c + 1] == 3) mineSet.insert({ r, c + 1 });
                 painted = true;
             }
         }
@@ -77,32 +131,24 @@ FindPath::PathResult SeaVehicle::findPath(
         }
         };
 
-    // === Dikey zigzag (öncelik yukarý-aþaðý hareketler) ===
+    // Zigzag tarama
     for (int j = startCol; j <= endCol; j++) {
         if ((j - startCol) % 2 == 0) {
-            // yukarýdan aþaðýya
             for (int i = startRow; i <= endRow; i++) {
-                if (grid[i][j] == 1 || grid[i][j] == 0) {
-                    break; // kara ya da yasak hücreye denk gelince sütunu kes
-                }
-
+                if (grid[i][j] == 1 || grid[i][j] == 0) break;
                 path.push_back({ i, j });
                 if (viz) {
-                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true); // tarama rengi
+                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
                     scanSides(i, j);
                 }
             }
         }
         else {
-            // aþaðýdan yukarýya
             for (int i = endRow; i >= startRow; i--) {
-                if (grid[i][j] == 1 || grid[i][j] == 0) {
-                    break; // kara ya da yasak hücreye denk gelince sütunu kes
-                }
-
+                if (grid[i][j] == 1 || grid[i][j] == 0) break;
                 path.push_back({ i, j });
                 if (viz) {
-                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true); // tarama rengi
+                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
                     scanSides(i, j);
                 }
             }
@@ -110,24 +156,30 @@ FindPath::PathResult SeaVehicle::findPath(
     }
 
     out.nodes = path;
-    out.distance = static_cast<int>(path.size()) - 1; //  adim sayisi o ana kadar ne kadar oldugu. 
+    out.distance = static_cast<int>(path.size()) - 1;
     out.elapsedTime = out.distance / speed;
 
-    // mayýn listesini setten al 
+    // MayÄ±n listesini setten al
     for (auto& m : mineSet) {
         out.mines.push_back({ m.first, m.second });
     }
 
-    // Mayýnlarý kýrmýzýya boya
+    // Final boyama
     for (auto& m : out.mines) {
         int r = m.r;
         int c = m.c;
-        if (viz && viz->table()) {
+        qDebug() << "Final boyama:" << r << c
+            << "noise=" << seaNoise[r][c];
+        if (viz && viz->table() && seaNoise[r][c] <= noiseRate::seaNoiceRate) {
+            qDebug() << "   -> Kirmizi + ikon basildi";
             QTableWidgetItem* item = viz->table()->item(r, c);
             if (item) {
-                item->setBackground(VisualizationConfig::MINE_COLOR); // mayýn kýrmýzý
-                item->setIcon(VisualizationConfig::mineIcon());       // opsiyonel: mayýn ikonu
+                item->setBackground(VisualizationConfig::MINE_COLOR);
+                item->setIcon(VisualizationConfig::mineIcon());
             }
+        }
+        else {
+            qDebug() << "   -> BoyanmadÄ±";
         }
     }
 

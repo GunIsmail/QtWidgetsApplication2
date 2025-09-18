@@ -305,10 +305,10 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
     // --- Mayın ekleme ---
     if (currentState == AppState::AddingMine) {
         if (m_matrixData[row][col] == 2 || m_matrixData[row][col] == 3) {
-            item->setText("X");
+            
             item->setBackground(VisualizationConfig::SEA_COLOR);
             item->setForeground(VisualizationConfig::MINE_TEXT_COLOR);
-            item->setIcon(QIcon()); // ikon temizle
+            item->setIcon(QIcon()); 
             m_matrixData[row][col] = 3;
         }
         else {
@@ -879,8 +879,7 @@ QString QtWidgetsApplication2::vehicleToText(Vehicle* v) {
     return v->name();
 } 
 
-
-// haritanın global ticck 
+// haritanın global ticck isleyecek 
 void QtWidgetsApplication2::startGameLoop()
 {
     QTimer* timer = new QTimer(this);

@@ -15,7 +15,7 @@ public:
         FindPath::Cell goal,
         Visualization* viz,
         double speed,
-        EnemyManager* enemies) = 0; // virtual fonksiyon yaptýk. 
+        EnemyManager* enemies) = 0; // pure virtual fonksiyon yaptýk. Tanýmlamadan kullanamazsýn. 
    
     virtual QString name() const = 0; //arac adi donecke fonksýyona "kara " , "deniz","hava"    
     virtual bool stepMove(const FindPath::Grid& grid,

@@ -3,7 +3,7 @@
 
 #include <QColor>
 #include <QIcon>
-// Araç hýzlarý statik nesne baslatmak ýstemedým cagirirken 
+// Araç hýzlarý statik nesne baslatmak ýstemedým cagirirken. Bunlar için her nesneye ayrý kopya açmaya gerek yok. Bellekten yer kazanýyoruz. 
 struct Speed {
     static constexpr double land = 3.0;
     static constexpr double sea = 1.0;
@@ -48,5 +48,8 @@ namespace VisualizationConfig {
 	inline QIcon endIcon() { return QIcon("icons/end.png"); }
 
 
+}
+namespace noiseRate {
+    const  int seaNoiceRate = 50;
 }
 #endif // DEFINITIONS_H

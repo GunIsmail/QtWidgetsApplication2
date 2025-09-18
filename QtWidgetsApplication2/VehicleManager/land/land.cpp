@@ -76,7 +76,7 @@ bool LandVehicle::stepMove(const FindPath::Grid& grid,
         m_path = runAStar(grid, m_currentPos, m_goal, enemies);
         m_stepIndex = 0;
         if (m_path.empty()) return false;
-    }
+    } 
 
     Cell next = m_path[m_stepIndex];
 
@@ -218,7 +218,7 @@ FindPath::PathResult LandVehicle::findPath(
         if (viz) {
             if (auto table = viz->table()) {
                 if (auto* item = table->item(cur.r, cur.c)) {
-                    item->setBackground(QColor(0, 255, 0));
+                    item->setBackground(VisualizationConfig::LAND_COLOR);
                     item->setIcon(VisualizationConfig::landIcon());
                 }
                 QCoreApplication::processEvents();
