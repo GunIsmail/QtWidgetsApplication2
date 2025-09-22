@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 
+
 FindPath::PathResult SeaVehicle::findPath(
     const FindPath::Grid& grid,
     FindPath::Cell start,
@@ -29,23 +30,24 @@ FindPath::PathResult SeaVehicle::findPath(
         }
     }
 
-    // === Başlangıç ve bitiş alanı hesapla ===
-    bool goingRight = (goal.c > start.c);
-
+    // === Satır aralığı ===
     int startRow = std::min(start.r, goal.r);
     int endRow = std::max(start.r, goal.r);
 
-    int startCol = std::min(start.c, goal.c);
-    int endCol = std::max(start.c, goal.c);
+    // === Sütun aralığı ===
+    int leftCol = std::min(start.c, goal.c);
+    int rightCol = std::max(start.c, goal.c);
 
-    // Kaydırma: başlangıç yanından başla, hedef kolonuna varmadan bitir
+    int startCol, endCol;
+    bool goingRight = (start.c < goal.c);
+
     if (goingRight) {
-        if (startCol + 1 < (int)grid[0].size()) startCol += 1;
-        if (endCol - 1 >= 0) endCol -= 1;  // hedef sütundan 1 önce bit
+        startCol = leftCol + 1;   // sağa gidiyorsa 1 sağdan başla
+        endCol = rightCol - 1;  // hedefin 1 öncesinde bit
     }
     else {
-        if (startCol - 1 >= 0) startCol -= 1;
-        if (endCol + 1 < (int)grid[0].size()) endCol += 1; // hedef sütundan 1 önce bit (sola gidiyorsa ters mantık)
+        startCol = rightCol - 1;  // sola gidiyorsa 1 soldan başla
+        endCol = leftCol + 1;   // hedefin 1 sonrasında bit
     }
 
     // === Tek hücre boyama ===
@@ -115,24 +117,52 @@ FindPath::PathResult SeaVehicle::findPath(
         };
 
     // === Zigzag tarama ===
-    for (int j = startCol; j <= endCol; j++) {
-        if ((j - startCol) % 2 == 0) {
-            for (int i = startRow; i <= endRow; i++) {
-                if (grid[i][j] == 1 || grid[i][j] == 0) break;
-                path.push_back({ i, j });
-                if (viz) {
-                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
-                    scanSides(i, j);
+    if (goingRight) {
+        // Sağa doğru
+        for (int j = startCol; j <= endCol; j++) {
+            if ((j - startCol) % 2 == 0) {
+                for (int i = startRow; i <= endRow; i++) {
+                    if (grid[i][j] == 1 || grid[i][j] == 0) break;
+                    path.push_back({ i, j });
+                    if (viz) {
+                        scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
+                        scanSides(i, j);
+                    }
+                }
+            }
+            else {
+                for (int i = endRow; i >= startRow; i--) {
+                    if (grid[i][j] == 1 || grid[i][j] == 0) break;
+                    path.push_back({ i, j });
+                    if (viz) {
+                        scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
+                        scanSides(i, j);
+                    }
                 }
             }
         }
-        else {
-            for (int i = endRow; i >= startRow; i--) {
-                if (grid[i][j] == 1 || grid[i][j] == 0) break;
-                path.push_back({ i, j });
-                if (viz) {
-                    scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
-                    scanSides(i, j);
+    }
+    else {
+        // Sola doğru
+        for (int j = startCol; j >= endCol; j--) {
+            if ((startCol - j) % 2 == 0) {  // ters yönde kontrol
+                for (int i = startRow; i <= endRow; i++) {
+                    if (grid[i][j] == 1 || grid[i][j] == 0) break;
+                    path.push_back({ i, j });
+                    if (viz) {
+                        scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
+                        scanSides(i, j);
+                    }
+                }
+            }
+            else {
+                for (int i = endRow; i >= startRow; i--) {
+                    if (grid[i][j] == 1 || grid[i][j] == 0) break;
+                    path.push_back({ i, j });
+                    if (viz) {
+                        scanCell(i, j, VisualizationConfig::SEARCH_COLOR, true);
+                        scanSides(i, j);
+                    }
                 }
             }
         }
