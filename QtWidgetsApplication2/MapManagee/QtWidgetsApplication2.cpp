@@ -1,7 +1,7 @@
 ﻿#include "QtWidgetsApplication2.h"
 
 
-//constructor 
+// constructor 
 QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     : QWidget(parent)
 {
@@ -16,8 +16,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     addSeaButton = new QPushButton("Deniz Ekle", this);
     addMineButton = new QPushButton("Mayin Ekle", this);
 
-    addEnemyButton = new QPushButton("Elle Düşman Ekle", this);       // Elle ekleme
-    addRandomEnemyButton = new QPushButton("Rastgele Düşman Ekle", this); // Rastgele ekleme
+    addEnemyButton = new QPushButton("Elle Düşman Ekle", this);
+    addRandomEnemyButton = new QPushButton("Rastgele Düşman Ekle", this);
 
     saveButton = new QPushButton("Kaydet", this);
     matrixTable = new QTableWidget(this);
@@ -72,8 +72,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     QHBoxLayout* vehicleLayout = new QHBoxLayout();
     vehicleLayout->addWidget(vehicleComboBox);
     vehicleLayout->addWidget(addVehicleButton);
-    vehicleLayout->addWidget(addEnemyButton);        // Elle ekleme butonu
-    vehicleLayout->addWidget(addRandomEnemyButton);  // Rastgele ekleme butonu
+    vehicleLayout->addWidget(addEnemyButton);
+    vehicleLayout->addWidget(addRandomEnemyButton);
 
     QHBoxLayout* algorithmButtonsLayout = new QHBoxLayout();
     algorithmButtonsLayout->addWidget(setStartButton);
@@ -92,7 +92,7 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     mainLayout->addLayout(inputLayout);
 
     matrixTable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mainLayout->addWidget(matrixTable, 5); // tabloya daha fazla yer
+    mainLayout->addWidget(matrixTable, 5);
     mainLayout->addLayout(actionButtonLayout, 1);
     mainLayout->addLayout(algorithmLayout, 2);
 
@@ -123,8 +123,8 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     connect(addSeaButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addSeaClicked);
     connect(addMineButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addMineClicked);
 
-    connect(addEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemyClicked);   // Elle ekleme
-    connect(addRandomEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemies); // Rastgele ekleme
+    connect(addEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemyClicked);
+    connect(addRandomEnemyButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addEnemies);
 
     connect(matrixTable, &QTableWidget::cellClicked, this, &QtWidgetsApplication2::cellClicked);
     connect(saveButton, &QPushButton::clicked, this, &QtWidgetsApplication2::saveMatrix);
@@ -137,8 +137,10 @@ QtWidgetsApplication2::QtWidgetsApplication2(QWidget* parent)
     connect(skipButton, &QPushButton::clicked, this, &QtWidgetsApplication2::skipVehicle);
     connect(addVehicleButton, &QPushButton::clicked, this, &QtWidgetsApplication2::addVehicle);
 
-
+    // 🔹 Uygulama açıldığında düşman hareketi için game loop başlat
+    startGameLoop();
 }
+
 //destructor 
 QtWidgetsApplication2::~QtWidgetsApplication2()
 {

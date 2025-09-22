@@ -3,7 +3,7 @@
 
 #include <QColor>
 #include <QIcon>
-// Araç hýzlarý statik nesne baslatmak ýstemedým cagirirken. Bunlar için her nesneye ayrý kopya açmaya gerek yok. Bellekten yer kazanýyoruz. 
+// Araç hýzlarý statik nesne baslatmak ýstemedým cagirirken. Bunlar için her nesneye ayrý kopya açmaya gerek yok. Bellekten yer kazan . 
 struct Speed {
     static constexpr double land = 3.0;
     static constexpr double sea = 1.0;
