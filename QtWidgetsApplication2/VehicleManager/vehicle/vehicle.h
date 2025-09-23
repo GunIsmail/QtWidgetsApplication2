@@ -1,7 +1,7 @@
     #pragma once
 #include "../FindPath.h"
 #include "../visualizationManager/visualization.h"
-#include "../definitions.h"
+#include "definitions.h"
 
 class EnemyManager; // pointer gecirebilmek ýcýn forward declaration
 

@@ -76,27 +76,21 @@
     <ClCompile Include="VehicleSelectionDialogManager\VehicleSelectionDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="definitions\definitions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="definitions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VehicleManager\FindPath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VehicleManager\air\air.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VehicleManager\land\land.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VehicleManager\sea\sea.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="visualizationManager\visualization.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="definitions\definitions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VehicleManager\vehicle\vehicle.h">
@@ -108,9 +102,13 @@
     <ClInclude Include="EnemyManager\EnemyManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="definitions\definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Object Include="x64\Debug\definitions.obj" />
+    <Object Include="x64\Debug\air.obj" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="x64\Debug\QtWidgetsApplication2.Build.CppClean.log" />
@@ -135,6 +133,9 @@
     <QtMoc Include="VehicleSelectionDialogManager\VehicleSelectionDialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="VehicleManager\land\land.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <Image Include="icons\plane.png">
@@ -144,6 +145,18 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="icons\tank.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icons\end.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icons\enemy.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icons\mine.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="icons\start.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

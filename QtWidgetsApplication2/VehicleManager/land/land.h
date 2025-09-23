@@ -2,8 +2,10 @@
 #include "vehicle/vehicle.h"
 #include "EnemyManager/EnemyManager.h"
 #include <vector>
+#include <qobject.h>
 
-class LandVehicle : public Vehicle {
+class LandVehicle : public QObject, public Vehicle { 
+    Q_OBJECT
 public:
     LandVehicle();
 
@@ -15,7 +17,7 @@ public:
         Visualization* viz,
         double speed,
         EnemyManager* enemies) override;
-
+    std::vector<FindPath::Cell> m_travelledPath;
     bool stepMove(const FindPath::Grid& grid,
         EnemyManager* enemies,
         QTableWidget* table) override;   
@@ -24,7 +26,8 @@ public:
 
     FindPath::Cell currentPos() const { return m_currentPos; }
     void setCurrentPos(const FindPath::Cell& pos) { m_currentPos = pos; }
-
+signals:
+    void finished(QString vehicleName, FindPath::PathResult result); 
 private:
     static bool passableForLand(const FindPath::Grid& grid,
         const EnemyManager* enemies,
@@ -35,9 +38,10 @@ private:
         FindPath::Cell start,
         FindPath::Cell goal,
         const EnemyManager* enemies);
+    
 
     FindPath::Cell m_currentPos;
-    FindPath::Cell m_goal;                       // 🔹 game loop için hedef
-    std::vector<FindPath::Cell> m_path;          // 🔹 aktif yol
-    int m_stepIndex = 0;                         // 🔹 path index
+    FindPath::Cell m_goal;                       //  game loop için hedef
+    std::vector<FindPath::Cell> m_path;          //  aktif yol
+    int m_stepIndex = 0;                         //  path index
 };

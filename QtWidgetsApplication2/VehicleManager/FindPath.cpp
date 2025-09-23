@@ -33,6 +33,6 @@ FindPath::PathResult FindPath::findPathWithVehicle(
         speed = Speed::air;
     }
 
-    //  Bütün araçlar ayný imzayý kullanýr, ama Sea/Air düþman parametresini ignore eder
+    //  Bütün araçlar ayný imzayý kullanýr
     return vehicle->findPath(grid, start, goal, viz, speed, enemies);
 }

@@ -3,31 +3,35 @@
 
 #include <QColor>
 #include <QIcon>
-// Araç hýzlarý
+// Araç hýzlarý statik nesne baslatmak ýstemedým cagirirken. Bunlar için her nesneye ayrý kopya açmaya gerek yok. Bellekten yer kazan . 
 struct Speed {
-    static constexpr double land = 1.0;
+    static constexpr double land = 3.0;
     static constexpr double sea = 1.0;
     static constexpr double air = 5.0;
+    static constexpr double enemy = 2.0;//hareketsýz koydum hareketlý hale getýrýlebýlýr. 
+    static constexpr int refreshSpeed = 200; // ms cinsinden deger girin 
 };
+
 
 // Görselleþtirme ayarlarý
 namespace VisualizationConfig {
-    constexpr int STEP_DELAY_MS = 500;   // animasyon gecikmesi (ms)
-    constexpr int CELL_SIZE = 30;  // cell boyutu 
+    constexpr int STEP_DELAY_MS = 1000;   // animasyon gecikmesi (ms)
+    constexpr int CELL_SIZE = 50;  // cell boyutu  
     // Renkler
     const QColor LAND_COLOR = QColor(0, 128, 0);   // yeþil
     const QColor SEA_COLOR = QColor(0, 0, 255);   // mavi
     const QColor AIR_COLOR = QColor(255, 0, 0);   // kýrmýzý
-    const QColor SCAN_COLOR = QColor(199,21,133);   // medium violet purple 
+    const QColor SCAN_COLOR = QColor(0, 245, 255);   //turkuaz
     const QColor SEARCH_COLOR = QColor(255, 255, 0); // sarý
+    const QColor MINE_COLOR = QColor(139, 0, 0); // mayin kirmizisi
 
-    const QColor OBSTACLE_COLOR = QColor(0, 0, 0);           // engel siyah
+    const QColor OBSTACLE_COLOR = QColor(0, 0, 0);          // engel siyah
     const QColor OBSTACLE_TEXT_COLOR = QColor(0, 0, 0);
 
     const QColor LAND_BG_COLOR = QColor(139, 69, 19);         // kahverengi kara zemini
     const QColor LAND_TEXT_COLOR = QColor(139, 69, 19);
 
-    const QColor SEA_TEXT_COLOR = QColor(0, 0, 255); 
+    const QColor SEA_TEXT_COLOR = QColor(0, 0, 255);
     const QColor MINE_TEXT_COLOR = QColor(255, 0, 0);
 
     // Çizgi kalýnlýklarý
@@ -35,11 +39,17 @@ namespace VisualizationConfig {
     constexpr int SEA_WIDTH = 3;
     constexpr int AIR_WIDTH = 2;
 
-    const QIcon AIR_ICON = QIcon(":/icons/plane.png");
-    const QIcon LAND_ICON = QIcon(":/icons/tank.png");
-    const QIcon SEA_ICON = QIcon(":/icons/ship.png");
-    const QIcon START_ICON = QIcon(":/icons/start.png");
-    const QIcon END_ICON = QIcon(":/icons/end.png");
-}
+    inline QIcon airIcon() { return QIcon("icons/plane.png"); }
+    inline QIcon landIcon() { return QIcon("icons/tank.png"); }
+    inline QIcon seaIcon() { return QIcon("icons/ship.png"); }
+    inline QIcon mineIcon() { return QIcon("icons/mine.png"); }
+    inline QIcon enemyIcon() { return QIcon("icons/enemy.png"); }
+    inline QIcon startIcon() { return QIcon("icons/start.png"); }
+    inline QIcon endIcon() { return QIcon("icons/end.png"); }
 
+
+}
+namespace noiseRate {
+    const  int seaNoiceRate = 50;
+}
 #endif // DEFINITIONS_H

@@ -46,10 +46,18 @@ void EnemyManager::stepAll() {
     std::set<FindPath::Cell> occupied;
 
     for (auto& e : m_enemies) {
-        double interval = 1000.0 / e.speed; // ms per step
+        // === HIZ KONTROLÜ ===
+        if (e.speed <= 0) {
+            // Hızı 0 veya negatif → hiç hareket etmiyor
+            nextTargets[e.pos] = e.pos;
+            continue;
+        }
+
+        double interval = VisualizationConfig::STEP_DELAY_MS / e.speed; // ms per step
         if (now - e.lastMoveTime < interval)
             continue; // zamanı gelmedi
 
+        // Komşuları kontrol et
         std::vector<FindPath::Cell> neighbors;
         for (int k = 0; k < 4; k++) {
             int nr = e.pos.r + dr[k];
@@ -67,14 +75,16 @@ void EnemyManager::stepAll() {
             auto next = neighbors[std::rand() % neighbors.size()];
             nextTargets[e.pos] = next;
             occupied.insert(next);
+            e.lastMoveTime = now; // sadece hareket ettiyse güncelle
         }
         else {
             nextTargets[e.pos] = e.pos; // hareket edemedi
+            // lastMoveTime aynı kalmalı
         }
-
-        e.lastMoveTime = now;
     }
 
+
+    // Sonuçları uygula
     for (auto& e : m_enemies) {
         if (nextTargets.count(e.pos)) {
             e.pos = nextTargets[e.pos];
@@ -82,8 +92,8 @@ void EnemyManager::stepAll() {
     }
 }
 
+
 void EnemyManager::updateSnapshot(int R, int C) {
-    // her 50 ms’de bir çağrılacak → snapshot güncellenir
     m_enemySnapshot.assign(R, std::vector<int>(C, 0));
 
     for (auto& e : m_enemies) {

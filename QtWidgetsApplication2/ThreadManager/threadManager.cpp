@@ -10,21 +10,26 @@ void ThreadManager::runVehicle(Vehicle* vehicle,
     FindPath::Cell goal,
     QTableWidget* table,
     double speed,
-    EnemyManager* enemies)  
-
+    EnemyManager* enemies)
 {
     QtConcurrent::run([=]() {
         Visualization viz(table);
 
-        double speed = 1.0;
-        if (vehicle->name() == "Kara") speed = Speed::land;
-        else if (vehicle->name() == "Deniz") speed = Speed::sea;
-        else if (vehicle->name() == "Hava") speed = Speed::air;
+        double speedVal = 1.0;
+        if (vehicle->name() == "Kara") speedVal = Speed::land;
+        else if (vehicle->name() == "Deniz") speedVal = Speed::sea;
+        else if (vehicle->name() == "Hava") speedVal = Speed::air;
 
-        auto res = vehicle->findPath(grid, start, goal, &viz, speed,enemies);
-        emit vehicleFinished(vehicle->name(), res);
+        auto res = vehicle->findPath(grid, start, goal, &viz, speedVal, enemies);
+
+        // 🚩 Sadece deniz/hava için hemen sonuç gönder
+        if (vehicle->name() != "Kara") {
+            emit vehicleFinished(vehicle->name(), res);
+        }
+        // Kara aracı yolculuk sonunda kendisi emit edecek
         });
 }
+
 // ---------------- EnemyThread class constructor  ----------------
 EnemyThread::EnemyThread(EnemyManager* manager, Visualization* viz, double speed)
     : m_manager(manager), m_viz(viz), m_speed(speed) {

@@ -262,7 +262,7 @@ void QtWidgetsApplication2::cellClicked(int row, int col)
                 m_enemyManager = new EnemyManager(m_matrixData);
             }
             if (!m_enemyManager->isOccupied(row, col)) {
-                m_enemyManager->addEnemy({ row, col });
+                m_enemyManager->addEnemy({ row, col },Speed::enemy);
 
                 // tabloya düşman ikonu koy
                 item->setIcon(VisualizationConfig::enemyIcon());
@@ -424,7 +424,8 @@ void QtWidgetsApplication2::saveMatrix()
     }
 }
 void QtWidgetsApplication2::findPath()
-{     // --- diğer widget’lari gizle ---
+{
+    // --- diğer widget’lari gizle ---
     nLabel->hide();
     mLabel->hide();
     nLineEdit->hide();
@@ -461,7 +462,6 @@ void QtWidgetsApplication2::findPath()
     m_enemyManager->updateSnapshot(matrixTable->rowCount(),
         matrixTable->columnCount());
 
-
     if (rows > 0 && cols > 0) {
         int cellSize = std::min(W / cols, H / rows);
 
@@ -478,7 +478,6 @@ void QtWidgetsApplication2::findPath()
         int y = (H - tableHeight) / 2;
 
         matrixTable->setGeometry(x, y, tableWidth, tableHeight);
-
     }
 
     // --- mevcut yol bulma kodun ---
@@ -487,13 +486,12 @@ void QtWidgetsApplication2::findPath()
 
     ThreadManager* manager = new ThreadManager(this);
 
+    // 🔹 Ortak bağlantı (Deniz + Hava, statik yollar)
     connect(manager, &ThreadManager::vehicleFinished, this,
         [=](QString vehicleName, FindPath::PathResult res) {
             Speed speeds;
             if (vehicleName == "Kara") {
-                printAndVisualizeResult(vehicleName, res, speeds.land,
-                    VisualizationConfig::LAND_COLOR,
-                    VisualizationConfig::LAND_WIDTH);
+                // Kara için sonucu burada değil, LandVehicle sinyali üzerinden alacağız
             }
             else if (vehicleName == "Deniz") {
                 printAndVisualizeResult(vehicleName, res, speeds.sea,
@@ -510,14 +508,25 @@ void QtWidgetsApplication2::findPath()
 
     for (const auto& task : m_vehicleTasks) {
         Vehicle* v = task.vehicle;
-        double speed =0; // default baslat trash deger kalmis olabilri 
+        double speed = 0;
 
         if (dynamic_cast<LandVehicle*>(v)) speed = Speed::land;
         else if (dynamic_cast<SeaVehicle*>(v)) speed = Speed::sea;
         else if (dynamic_cast<AirVehicle*>(v)) speed = Speed::air;
 
         if (v) {
-            manager->runVehicle(v, m_matrixData, task.start, task.end, matrixTable, speed,m_enemyManager);
+            // 🔹 Eğer Kara aracıysa -> kendi finished sinyalini dinle
+            if (auto* land = dynamic_cast<LandVehicle*>(v)) {
+                connect(land, &LandVehicle::finished, this,
+                    [=](QString vehicleName, FindPath::PathResult res) {
+                        printAndVisualizeResult(vehicleName, res, Speed::land,
+                            VisualizationConfig::LAND_COLOR,
+                            VisualizationConfig::LAND_WIDTH);
+                    });
+            }
+
+            manager->runVehicle(v, m_matrixData, task.start, task.end,
+                matrixTable, speed, m_enemyManager);
         }
     }
 }
